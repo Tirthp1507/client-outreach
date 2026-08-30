@@ -1,0 +1,43 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Environment secrets
+.env
+!.env.example
+
+# Generated output (audio, drafts, scripts, final videos)
+output/
+
+# OS / editor
+Desktop.ini
+Thumbs.db
+.vscode/
+.idea/
+
+# Hive runtime artifacts that should not be committed into this repo
+*.log
+roster.json
+roster-backups/
+hive/fleet.json
+hive/log.jsonl
+hive/registry.json
+hive/tasks.json
+hive/spawn-requests/
+
+# Databases
+*.db
+*.sqlite
+*.sqlite3
+
+# Scratch & temporary test files
+scratch/
+JIM_TEST.txt
+RYAN_TEST.txt
