@@ -1,0 +1,75 @@
+{
+  "hooksConfig": {
+    "enabled": true,
+    "notifications": false
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "sequential": true,
+        "hooks": [
+          {
+            "name": "munder-hive-session-start",
+            "type": "command",
+            "command": "C:\\Users\\tirth\\Desktop\\automation\\hive\\bin\\hive-node.cmd C:\\Users\\tirth\\Desktop\\automation\\hive\\agents\\god\\.gemini-hive\\gemini-hook.cjs",
+            "timeout": 30000
+          }
+        ]
+      }
+    ],
+    "BeforeAgent": [
+      {
+        "sequential": true,
+        "hooks": [
+          {
+            "name": "munder-hive-before-agent",
+            "type": "command",
+            "command": "C:\\Users\\tirth\\Desktop\\automation\\hive\\bin\\hive-node.cmd C:\\Users\\tirth\\Desktop\\automation\\hive\\agents\\god\\.gemini-hive\\gemini-hook.cjs",
+            "timeout": 30000
+          }
+        ]
+      }
+    ],
+    "BeforeTool": [
+      {
+        "matcher": ".*",
+        "sequential": true,
+        "hooks": [
+          {
+            "name": "munder-hive-before-tool",
+            "type": "command",
+            "command": "C:\\Users\\tirth\\Desktop\\automation\\hive\\bin\\hive-node.cmd C:\\Users\\tirth\\Desktop\\automation\\hive\\agents\\god\\.gemini-hive\\gemini-hook.cjs",
+            "timeout": 30000
+          }
+        ]
+      }
+    ],
+    "AfterTool": [
+      {
+        "matcher": ".*",
+        "sequential": true,
+        "hooks": [
+          {
+            "name": "munder-hive-after-tool",
+            "type": "command",
+            "command": "C:\\Users\\tirth\\Desktop\\automation\\hive\\bin\\hive-node.cmd C:\\Users\\tirth\\Desktop\\automation\\hive\\agents\\god\\.gemini-hive\\gemini-hook.cjs",
+            "timeout": 30000
+          }
+        ]
+      }
+    ],
+    "AfterAgent": [
+      {
+        "sequential": true,
+        "hooks": [
+          {
+            "name": "munder-hive-after-agent",
+            "type": "command",
+            "command": "C:\\Users\\tirth\\Desktop\\automation\\hive\\bin\\hive-node.cmd C:\\Users\\tirth\\Desktop\\automation\\hive\\agents\\god\\.gemini-hive\\gemini-hook.cjs",
+            "timeout": 30000
+          }
+        ]
+      }
+    ]
+  }
+}
