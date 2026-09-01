@@ -1,0 +1,135 @@
+# =============================================================================
+# AI Content Automation System — configuration
+# =============================================================================
+# Values here can be overridden by environment variables (see src/config.py)
+# or by a local `config/.env` file. Never commit API keys to this file.
+
+pipeline:
+  # Provider used by the script engine. Options:
+  #   template  - deterministic offline generator (default, no API key needed)
+  #   openai    - any OpenAI-compatible API (OpenAI, Ollama, LM Studio, Azure, ...)
+  script_provider: template
+  # where to place generated output
+  output_dir: output
+
+script:
+  target_seconds: 40
+  max_seconds: 50
+  language: en
+  # openai-compatible provider settings (used when script_provider=openai)
+  openai:
+    model: gpt-4o-mini
+    temperature: 0.7
+
+voice:
+  engine: edge_tts
+  voice: en-US-JennyNeural
+  rate: "+0%"
+  pitch: "+0Hz"
+  volume: "+0%"
+  # Publish loudness normalization (EBU R128 LUFS). Set to null to disable.
+  loudness_target: -14.0
+  loudness_tp: -1.5
+  loudness_lra: 11
+
+music:
+  enabled: true
+  volume: 0.12
+  # Sidechain ducking: compress the background music while narration is speaking.
+  ducking: true
+  duck_threshold: 0.03
+  duck_ratio: 12
+  duck_attack: 5
+  duck_release: 250
+
+video:
+  width: 1080
+  height: 1920
+  framerate: 30
+  # background source: auto | solid | asset
+  #   solid -> generated color background (works without any media assets)
+  #   asset -> first file found in assets/backgrounds
+  #   auto  -> asset if available, otherwise solid
+  background_mode: auto
+  background_color: "0x0F172A"
+  background_asset: assets/backgrounds
+  # Rescale/crop background media to cover the 1080x1920 frame (true=cover, false=letterbox)
+  crop_background: true
+  subtitle_font_size: 64
+  subtitle_font_color: white
+  # Phase 8: burn a per-scene section-header track at the top of the frame.
+  show_scene_headers: true
+
+collectors:
+  rss:
+    enabled: true
+    timeout: 10
+    feeds:
+      - name: "Hacker News"
+        url: "https://news.ycombinator.com/rss"
+        category: "tech"
+      - name: "Ars Technica"
+        url: "https://feeds.arstechnica.com/arstechnica/index"
+        category: "tech"
+      - name: "BBC Technology"
+        url: "http://feeds.bbci.co.uk/news/technology/rss.xml"
+        category: "general-tech"
+  reddit:
+    enabled: true
+    timeout: 10
+    limit_per_sub: 10
+    subreddits:
+      - "technology"
+      - "productivity"
+      - "todayilearned"
+
+processors:
+  min_word_count: 5
+  max_word_count: 3000
+  dedup_similarity_threshold: 0.75
+
+strategy:
+  # Phase 10: rotate a deterministic set of visual variants (palette, pacing,
+  # template family) across consecutive generated videos so they never repeat
+  # the immediately-previous look. Off by default; only affects generation.
+  diversity_rotation: false
+
+# Phase 9/10: performance analytics / feedback-loop tuning.
+# These settings only add learned performance signals to ranking and strategy.
+# They never replace the deterministic ranking or strategy systems.
+analytics:
+  # Enable additive performance feedback in `auto` ranking (also controllable
+  # per-run via `python src/cli.py auto --feedback`).
+  feedback_enabled: false
+  # Phase 10: enable the topic-fatigue / anti-repetition diversity scorer
+  # (also controllable per-run via `python src/cli.py auto --diversity`).
+  diversity_enabled: false
+  # Minimum number of snapshots before a category's signal is trusted.
+  min_samples: 3
+  # Phase 10: strict guardrail - a category must also be backed by snapshots
+  # from at least this many DISTINCT jobs (a single hot/cold job cannot
+  # manufacture a performance signal from repeated snapshots).
+  min_jobs: 2
+  # Phase 10: strict guardrail - |ratio - 1| must exceed this before a
+  # category is treated as a real signal (near-benchmark noise stays neutral).
+  min_effect: 0.10
+  # Max additive score points a single learned signal may contribute (+/-).
+  max_score_adjustment: 10.0
+  # Phase 10: diversity scorer tuning (bounded penalties, applied to scores).
+  diversity_window: 6
+  diversity_topic_similarity: 0.35
+  diversity_topic_penalty: 3.0
+  diversity_fatigue_threshold: 2
+  diversity_fatigue_penalty: 2.0
+  max_diversity_penalty: 5.0
+
+# B2B Client Outreach Email Configuration (SMTP delivery settings)
+# Can be overridden in config/.env or via environment variables
+email:
+  smtp_host: "smtp.gmail.com"
+  smtp_port: 587
+  smtp_username: ""
+  smtp_password: ""
+  from_email: ""
+  from_name: "Outreach Team"
+  use_tls: true

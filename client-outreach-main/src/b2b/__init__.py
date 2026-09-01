@@ -1,0 +1,145 @@
+"""B2B Business Acquisition and Outreach Automation Package."""
+
+from b2b.discovery import (
+    BaseDiscoveryProvider,
+    BusinessDeduplicator,
+    CSVLeadDiscoveryProvider,
+    DiscoveryRegistry,
+    DiscoveryResult,
+    DiscoveryService,
+    ManualLeadDiscoveryProvider,
+    clean_domain,
+    clean_phone,
+)
+from b2b.email_provider import (
+    BaseEmailProvider,
+    ConsoleEmailProvider,
+    OutreachSendingService,
+    SMTPEmailProvider,
+)
+from b2b.research_engine import HTTPWebResearchProvider
+from b2b.gatekeeper import ApprovalGateError, OutreachGatekeeper
+from b2b.analyst import AnalysisResult, BusinessAnalyst, vertical_for
+from b2b.scoring import OpportunityScorer, ScoreDimension, ScoredOpportunity
+from b2b.demo_generator import DemoBlueprint, DemoGenerator, DemoStrategy
+from b2b.outreach import OutreachDraft, OutreachGenerator
+from b2b.response_classifier import (
+    ClassifiedResponse,
+    ClassificationResult,
+    ResponseClassifier,
+)
+from b2b.followup import FollowUpIntelligence, FollowUpPlan, FollowUpPolicy
+from b2b.feedback import (
+    DimensionFinding,
+    FeedbackReport,
+    OutcomeSample,
+    OutreachFeedbackEngine,
+)
+from b2b.quality import DemoQualityChecker, OutreachQualityChecker, QualityReport
+from b2b.pipeline import BusinessIntelligenceService
+from b2b.models import (
+    ApprovalStatus,
+    BusinessRecord,
+    BusinessResearch,
+    BusinessStatus,
+    ClaimType,
+    DemoRecord,
+    DemoStatus,
+    DemoType,
+    EvidenceCategory,
+    FollowUpRecord,
+    FollowUpStatus,
+    OpportunityPriority,
+    OpportunityRecord,
+    OpportunityType,
+    OutreachRecord,
+    OutreachResponse,
+    QualificationStatus,
+    ReplyStatus,
+    ResearchEvidence,
+    ResponseClassification,
+    SendStatus,
+    SourceType,
+    VerticalType,
+)
+from b2b.research import (
+    BaseResearchProvider,
+    EvidenceCollector,
+    ResearchRegistry,
+)
+from b2b.scheduler_intent import (
+    BusinessCycleContext,
+    BusinessPipelineIntent,
+)
+
+__all__ = [
+    "AnalysisResult",
+    "ApprovalGateError",
+    "ApprovalStatus",
+    "BaseDiscoveryProvider",
+    "BaseEmailProvider",
+    "BaseResearchProvider",
+    "BusinessAnalyst",
+    "BusinessCycleContext",
+    "BusinessDeduplicator",
+    "BusinessIntelligenceService",
+    "BusinessPipelineIntent",
+    "BusinessRecord",
+    "BusinessResearch",
+    "BusinessStatus",
+    "CSVLeadDiscoveryProvider",
+    "ClaimType",
+    "ClassifiedResponse",
+    "ClassificationResult",
+    "ConsoleEmailProvider",
+    "DemoBlueprint",
+    "DemoGenerator",
+    "DemoQualityChecker",
+    "DemoRecord",
+    "DemoStatus",
+    "DemoStrategy",
+    "DemoType",
+    "DimensionFinding",
+    "DiscoveryRegistry",
+    "DiscoveryResult",
+    "DiscoveryService",
+    "EvidenceCategory",
+    "EvidenceCollector",
+    "FeedbackReport",
+    "FollowUpIntelligence",
+    "FollowUpPlan",
+    "FollowUpPolicy",
+    "FollowUpRecord",
+    "FollowUpStatus",
+    "HTTPWebResearchProvider",
+    "ManualLeadDiscoveryProvider",
+    "OpportunityPriority",
+    "OpportunityRecord",
+    "OpportunityScorer",
+    "OpportunityType",
+    "OutcomeSample",
+    "OutreachDraft",
+    "OutreachFeedbackEngine",
+    "OutreachGatekeeper",
+    "OutreachGenerator",
+    "OutreachQualityChecker",
+    "OutreachRecord",
+    "OutreachResponse",
+    "OutreachSendingService",
+    "QualificationStatus",
+    "QualityReport",
+    "ReplyStatus",
+    "ResearchEvidence",
+    "ResearchRegistry",
+    "ResponseClassification",
+    "ResponseClassifier",
+    "SMTPEmailProvider",
+    "ScoreDimension",
+    "ScoredOpportunity",
+    "SendStatus",
+    "SourceType",
+    "VerticalType",
+    "clean_domain",
+    "clean_phone",
+    "vertical_for",
+]
