@@ -1,0 +1,11 @@
+# Python core
+edge-tts>=6.1.0
+pydantic>=2.5
+PyYAML>=6.0
+rich>=13.0
+python-dotenv>=1.0
+requests>=2.31
+beautifulsoup4>=4.12.0
+
+# Testing
+pytest>=8.0
