@@ -6,12 +6,14 @@ from typing import Any
 
 from generators.base import ScriptProvider, ScriptProviderError  # noqa: F401
 from generators.models import ShortScript
+from generators.gemini_generator import GeminiProvider
 from generators.openai_generator import OpenAICompatibleProvider
 from generators.template_generator import TemplateScriptProvider
 
 PROVIDERS = {
     "template": TemplateScriptProvider,
     "openai": OpenAICompatibleProvider,
+    "gemini": GeminiProvider,
 }
 
 
@@ -36,6 +38,14 @@ def build_provider(
 
     if provider_name == "template":
         return TemplateScriptProvider()
+
+    if provider_name == "gemini":
+        gm = script_cfg.get("gemini", {})
+        return GeminiProvider(
+            api_key=gm.get("api_key"),
+            model=gm.get("model"),
+            temperature=gm.get("temperature", 0.7),
+        )
 
     if provider_name == "openai":
         oa = script_cfg.get("openai", {})

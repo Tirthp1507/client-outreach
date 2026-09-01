@@ -11,14 +11,14 @@ SYSTEM_PROMPT = (
 USER_PROMPT_TEMPLATE = (
     'Write a short-form video script for the topic: "{topic}".\n'
     "Return ONLY valid JSON in this exact shape, do not wrap it in code fences:\n"
-    '{\n'
+    '{{\n'
     '  "title": "a punchy on-screen title for the video",\n'
     '  "segments": [\n'
-    '    {"kind": "hook", "text": "..."},\n'
-    '    {"kind": "main", "text": "..."},\n'
-    '    {"kind": "cta", "text": "..."}\n'
+    '    {{"kind": "hook", "text": "..."}},\n'
+    '    {{"kind": "main", "text": "..."}},\n'
+    '    {{"kind": "cta", "text": "..."}}\n'
     "  ]\n"
-    "}\n"
+    "}}\n"
     "Constraints: hook <= 20 words, main 40-60 words, cta <= 20 words. "
     'The "text" fields must be plain spoken sentences without stage directions.'
 )

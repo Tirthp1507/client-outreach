@@ -1446,7 +1446,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     # dashboard (Phase 5 & 7)
     dash = sub.add_parser("dashboard", help="Start the local human approval studio web dashboard.")
-    dash.add_argument("--port", type=int, default=8080, help="Dashboard port (default: 8080)")
+    dash.add_argument("--port", type=int, default=8585, help="Dashboard port (default: 8585)")
     dash.add_argument("--host", default="127.0.0.1", help="Dashboard host (default: 127.0.0.1)")
     dash.add_argument("--output-dir", default=None, help="output directory (default: output/)")
     dash.set_defaults(func=cmd_dashboard)

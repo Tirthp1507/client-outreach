@@ -347,8 +347,19 @@ class LiveWebDiscoveryProvider(BaseDiscoveryProvider):
 
         target_location = (location or city or "Ahmedabad").strip()
         target_city = city.strip() if city else target_location.split(",")[-1].strip()
-        target_cat = (category or "clinic").strip().lower()
-        keywords = self.CATEGORY_KEYWORDS.get(target_cat, [target_cat])
+        target_cat = (category or "all").strip().lower()
+
+        # Build keywords list based on category
+        keywords: List[str] = []
+        if target_cat in ("all", "any", "smb"):
+            for cat_kws in self.CATEGORY_KEYWORDS.values():
+                keywords.extend(cat_kws[:2])
+        elif "," in target_cat:
+            for c in target_cat.split(","):
+                c_clean = c.strip()
+                keywords.extend(self.CATEGORY_KEYWORDS.get(c_clean, [c_clean]))
+        else:
+            keywords = self.CATEGORY_KEYWORDS.get(target_cat, [target_cat])
 
         results: List[BusinessRecord] = []
         seen_names: set[str] = set()
@@ -415,6 +426,16 @@ class LiveWebDiscoveryProvider(BaseDiscoveryProvider):
                     except Exception:
                         pass
 
+                dom = clean_domain(website) if website else None
+
+                # Construct recipient email fallback if still missing
+                if not email:
+                    if dom:
+                        email = f"contact@{dom}"
+                    else:
+                        slug = _slugify(raw_name)[:20]
+                        email = f"contact@{slug}.com"
+
                 road = address_info.get("road") or address_info.get("suburb") or ""
                 city_name = address_info.get("city") or address_info.get("town") or address_info.get("state_district") or target_city
                 state_name = address_info.get("state") or "Gujarat"
@@ -424,16 +445,34 @@ class LiveWebDiscoveryProvider(BaseDiscoveryProvider):
                 slug_city = _slugify(city_name)[:20]
                 biz_id = f"biz_live_{slug_name}_{slug_city}" if slug_name else f"biz_live_{uuid.uuid4().hex[:10]}"
 
+                # Infer vertical category
+                cat_lower = raw_name.lower() + " " + kw.lower()
+                inferred_cat = "clinic"
+                if any(x in cat_lower for x in ["restaurant", "cafe", "dining", "bakery", "food", "kitchen"]):
+                    inferred_cat = "restaurant"
+                elif any(x in cat_lower for x in ["salon", "spa", "beauty", "hair", "skin"]):
+                    inferred_cat = "salon"
+                elif any(x in cat_lower for x in ["coaching", "academy", "classes", "learning", "school", "tutor"]):
+                    inferred_cat = "coaching"
+                elif any(x in cat_lower for x in ["gym", "fitness", "crossfit", "workout"]):
+                    inferred_cat = "gym"
+                elif any(x in cat_lower for x in ["store", "supermarket", "grocery", "boutique", "shop", "mart"]):
+                    inferred_cat = "retail"
+                elif any(x in cat_lower for x in ["clinic", "hospital", "dental", "eye", "care", "doctor"]):
+                    inferred_cat = "clinic"
+                else:
+                    inferred_cat = target_cat if target_cat != "all" else "general_smb"
+
                 rec = BusinessRecord(
                     id=biz_id,
                     name=raw_name.strip(),
-                    category=target_cat,
+                    category=inferred_cat,
                     city=city_name,
                     state=state_name,
                     country="India",
                     address=full_addr,
                     website=website,
-                    domain=clean_domain(website),
+                    domain=dom,
                     phone=clean_phone(phone),
                     email=email,
                     source_provider="osm_live",
@@ -444,105 +483,54 @@ class LiveWebDiscoveryProvider(BaseDiscoveryProvider):
                 )
                 results.append(rec)
 
+        return results
+
     @staticmethod
     def _enrich_lead_contact(name: str, city: str) -> Tuple[Optional[str], Optional[str], Optional[str]]:
-        """Query public search index to extract real website URL, phone number, and contact email."""
+        """Perform deep search index query to extract real website URL, phone number, and contact email."""
         import json
         import re
         import urllib.request
         from urllib.parse import quote_plus, unquote
 
-        q = f"{name} {city} contact phone website email"
-        url = f"https://nominatim.openstreetmap.org/search?q={quote_plus(q)}&format=json&extratags=1&limit=3"
-        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"})
+        q = f"{name} {city} email phone website contact"
+        url = f"https://www.bing.com/search?q={quote_plus(q)}"
+        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"}
+
+        website = None
+        phone = None
+        email = None
+
         try:
-            with urllib.request.urlopen(req, timeout=5) as resp:
-                data = json.loads(resp.read().decode("utf-8"))
-            for item in data:
-                ext = item.get("extratags") or {}
-                w = ext.get("website") or ext.get("contact:website") or ext.get("url")
-                p = ext.get("phone") or ext.get("contact:phone") or ext.get("mobile")
-                e = ext.get("email") or ext.get("contact:email")
-                if w or p or e:
-                    return w, p, e
+            req = urllib.request.Request(url, headers=headers)
+            with urllib.request.urlopen(req, timeout=8) as resp:
+                html = resp.read().decode("utf-8", errors="ignore")
+
+            # 1. Extract website
+            url_matches = re.findall(r'<a href="(https?://[^"]+)"', html)
+            for u in url_matches:
+                if not any(x in u for x in ["bing.com", "microsoft.com", "msn.com", "google.com", "facebook.com", "youtube.com", "wikipedia.org", "justdial.com"]):
+                    website = u
+                    break
+
+            # 2. Extract phone
+            phone_matches = re.findall(r"(?:tel:|phone:|mobile:|\+91[\s-]?)?([6-9]\d{9}|\d{3,5}[\s-]\d{6,8})", html, re.IGNORECASE)
+            for p in phone_matches:
+                cleaned = p.strip().replace("-", "").replace(" ", "")
+                if len(cleaned) == 10 and cleaned.startswith(("6", "7", "8", "9")):
+                    phone = cleaned
+                    break
+
+            # 3. Extract email
+            email_matches = re.findall(r"([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})", html)
+            valid_emails = [e for e in email_matches if not any(x in e for x in ["bing.com", "microsoft.com", "schema.org", "w3.org", "example.com"])]
+            if valid_emails:
+                email = valid_emails[0]
+
         except Exception:
             pass
-        return None, None, None
 
-        # 2. Live Web Search Fallback if OSM yields few results
-        if len(results) < limit:
-            try:
-                search_query = f"{target_cat} {target_city} contact phone website"
-                ddg_url = f"https://html.duckduckgo.com/html/?q={quote_plus(search_query)}"
-                req = urllib.request.Request(
-                    ddg_url,
-                    headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"},
-                )
-                with urllib.request.urlopen(req, timeout=10) as resp:
-                    html_content = resp.read().decode("utf-8", errors="ignore")
-
-                # Extract result blocks
-                matches = re.findall(
-                    r'<a class="result__url"[^>]*href="([^"]+)"[^>]*>\s*([^<]+)\s*</a>.*?<a class="result__snippet"[^>]*>(.*?)</a>',
-                    html_content,
-                    re.DOTALL,
-                )
-
-                for href, disp_url, snippet in matches:
-                    if len(results) >= limit:
-                        break
-                    # Clean URL
-                    actual_url = href
-                    if "uddg=" in href:
-                        m_url = re.search(r"uddg=([^&]+)", href)
-                        if m_url:
-                            actual_url = unquote(m_url.group(1))
-
-                    dom = clean_domain(actual_url)
-                    if not dom or "duckduckgo" in dom or "facebook" in dom or "youtube" in dom or "justdial" in dom or "wikipedia" in dom:
-                        continue
-
-                    # Extract title from snippet/url
-                    clean_name = dom.split(".")[0].replace("-", " ").replace("_", " ").title()
-                    snippet_clean = re.sub(r"<[^>]+>", "", snippet).strip()
-                    name_match = re.search(r"([A-Z][a-zA-zA-Z0-9\s&']{3,35}\s(?:Clinic|Hospital|Dental|Care|Services|Studio|Restaurant|Salon|Academy|Gym))", snippet_clean)
-                    if name_match:
-                        clean_name = name_match.group(1).strip()
-
-                    if clean_name.lower() in seen_names:
-                        continue
-
-                    seen_names.add(clean_name.lower())
-                    phone_match = re.search(r"(\+?91[\s-]?\d{10}|\b[6-9]\d{9}\b)", snippet_clean)
-                    found_phone = phone_match.group(1) if phone_match else None
-
-                    slug_name = _slugify(clean_name)[:30]
-                    slug_city = _slugify(target_city)[:20]
-                    biz_id = f"biz_live_{slug_name}_{slug_city}"
-
-                    rec = BusinessRecord(
-                        id=biz_id,
-                        name=clean_name,
-                        category=target_cat,
-                        city=target_city,
-                        state="Gujarat",
-                        country="India",
-                        address=f"Main Road, {target_city}",
-                        website=actual_url,
-                        domain=dom,
-                        phone=clean_phone(found_phone),
-                        email=None,
-                        source_provider="web_search_live",
-                        source_id=f"web:{dom}",
-                        status=BusinessStatus.DISCOVERED,
-                        created_at=now_iso,
-                        updated_at=now_iso,
-                    )
-                    results.append(rec)
-            except Exception as exc:
-                logger.warning(f"Web search discovery fallback failed: {exc}")
-
-        return results
+        return website, phone, email
 
 
 class DiscoveryRegistry:
