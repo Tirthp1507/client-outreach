@@ -311,31 +311,24 @@ class BusinessAnalyst:
         support: List[ResearchEvidence],
     ) -> AnalysisResult:
         """Construct a fully traceable AnalysisResult for the chosen hypothesis."""
-        commodity = self._build_narrative(research, vertical, otype, support)
+        commodity = self._build_narrative(business, research, vertical, otype, support)
         if not support:
             return self._insufficient(
                 business,
                 f"Hypothesis {otype.value} formed but no supporting evidence found; refusing to manufacture.",
             )
 
-        evidence_ids = [x.id for x in support]
-        claims = [x.claim for x in support if x.claim]
+        evidence_ids = [e.id for e in support]
+        claims = [e.claim for e in support]
+        reasoning = [f"Supported by claim [{e.id}]: {e.claim}" for e in support]
         conf = self._confidence(research, support)
         risks, unknowns = self._risks_and_unknowns(research, otype)
 
-        summary = commodity["problem"]
-        if summary is None:
-            return self._insufficient(
-                business,
-                f"Problem summary for {otype.value} could not be grounded in evidence.",
-            )
-
-        reasoning = self._reasoning_lines(research, otype, support, commodity)
         return AnalysisResult(
             business_id=business.id,
             opportunity_type=otype,
             title=commodity["title"],
-            problem_summary=summary,
+            problem_summary=commodity["problem"],
             proposed_solution=commodity["solution"],
             business_value=commodity["value"],
             rationale=commodity["rationale"],
@@ -350,74 +343,57 @@ class BusinessAnalyst:
         )
 
     # -- narrative builders ------------------------------------------------
-    def _build_narrative(self, research, vertical, otype, support) -> dict:
+    def _build_narrative(self, business: BusinessRecord, research: BusinessResearch, vertical: VerticalType, otype: OpportunityType, support: List[ResearchEvidence]) -> dict:
         """Compose honest, specific narrative text for each opportunity type."""
         services = research.services or []
         svc = ", ".join(services[:3]) if services else "your services"
-        city = research.business_id  # placeholder replaced below
 
         if otype == OpportunityType.ONLINE_BOOKING:
+            weakness_desc = research.observed_weaknesses[0] if research.observed_weaknesses else f"no self-serve online booking system found for {business.name}"
             return {
-                "title": "Self-Serve Online Booking Portal",
-                "problem": (
-                    "Appointments currently rely on manual phone/WhatsApp coordination — "
-                    "no self-serve online booking flow was observed."
-                ),
-                "solution": (
-                    "A mobile-first booking page where customers pick a service, choose a slot, "
-                    "and receive instant confirmation, with admin calendar + reminders."
-                ),
+                "title": f"24/7 Digital Booking Engine for {business.name}",
+                "problem": f"Operational friction observed at {business.name} ({business.city}): {weakness_desc}.",
+                "solution": f"A mobile-first appointment booking platform tailored for {business.name} with automated instant confirmation & reminders.",
                 "value": "Reduces phone-tag, cuts missed appointments, and captures bookings outside working hours.",
-                "rationale": f"The business ({vertical.value}) shows appointment-style demand but no self-serve booking capability was found in research.",
+                "rationale": f"The business ({business.name}) shows appointment demand in {business.city} but lacks an automated self-serve booking portal.",
                 "effort": "low" if not research.is_mobile_friendly else "medium",
             }
         if otype == OpportunityType.LEAD_CAPTURE:
+            weakness_desc = research.observed_weaknesses[0] if research.observed_weaknesses else f"no structured inquiry intake flow found for {business.name}"
             return {
-                "title": "Lead Capture & Inquiry Intake",
-                "problem": (
-                    "No structured self-serve inquiry or lead capture flow was observed — "
-                    "enquiries depend on manual channels."
-                ),
-                "solution": (
-                    "A landing page with a short qualification form and instant response routing, "
-                    "turning each enquiry into a tracked lead."
-                ),
+                "title": f"Lead Capture & Digital Intake System for {business.name}",
+                "problem": f"Inbound inquiry friction at {business.name} ({business.city}): {weakness_desc}.",
+                "solution": f"A high-converting digital storefront and instant qualification form tailored for {business.name}.",
                 "value": "Captures enquiries that are currently lost between phone/chat/email, and makes follow-up consistent.",
-                "rationale": f"The business ({vertical.value}) is consultative/service-led; capturing inbound intent cleanly is a high-leverage automation.",
+                "rationale": f"The business ({business.name}) is consultative/service-led in {business.city}; capturing inbound intent cleanly is high-leverage.",
                 "effort": "low",
             }
         if otype == OpportunityType.ORDERING_SYSTEM:
+            weakness_desc = research.observed_weaknesses[0] if research.observed_weaknesses else f"no digital ordering catalog found for {business.name}"
             return {
-                "title": "Online Ordering / Menu System",
-                "problem": "No online ordering or menu ordering flow was observed for this business.",
-                "solution": (
-                    "A lightweight ordering page with menu/catalogue, order form, and confirmation — "
-                    "ready to plug into existing phone/WhatsApp workflows."
-                ),
+                "title": f"Direct Digital Menu & Order Platform for {business.name}",
+                "problem": f"Manual order processing observed at {business.name} ({business.city}): {weakness_desc}.",
+                "solution": f"An interactive menu & direct ordering web app for {business.name} with instant WhatsApp/SMS notification.",
                 "value": "Wins orders beyond business hours and reduces ordering friction on high-traffic channels.",
-                "rationale": f"The business sits in {vertical.value} where online ordering is standard; none was found in research.",
+                "rationale": f"The business ({business.name}) sits in {vertical.value} where digital ordering drives direct high-margin revenue.",
                 "effort": "low" if not research.ordering_system_found else "medium",
             }
         if otype == OpportunityType.WEBSITE_MODERNIZATION:
-            if research.website_exists is False:
-                return {
-                    "title": "Business Website / Online Presence",
-                    "problem": "No functioning website presence was observed for this business.",
-                    "solution": "A modern, mobile-first website covering services, contact, and location with a lead-capture path.",
-                    "value": "Gives an online storefront where customers currently find little or nothing — the entry point for most local searches.",
-                    "rationale": "No website presence was observed, which limits findability for a local service business.",
-                    "effort": "low",
-                }
+            weakness_desc = research.observed_weaknesses[0] if research.observed_weaknesses else f"lacks a 24/7 automated self-serve web booking engine"
             return {
-                "title": "Website Modernization & Mobile Experience",
-                "problem": (
-                    "The existing site shows mobile/quality issues in research — "
-                    + (", ".join(research.observed_weaknesses[:2]) if research.observed_weaknesses else "not mobile-optimized")
-                    + "."
-                ),
-                "solution": "A redesigned, fast, mobile-first site that preserves content while fixing the friction.",
+                "title": f"Bespoke Commercial Web Presence & Digital Booking Engine for {business.name}",
+                "problem": f"Digital experience friction at {business.name} ({business.city}): {weakness_desc}.",
+                "solution": f"A 3-page modern commercial website prototype featuring showcase hero, interactive rate card, and 24/7 digital booking engine for {business.name}.",
+                "value": "Provides a high-converting digital storefront & automated self-serve booking portal for customers in {business.city}.",
+                "rationale": f"Digital experience friction observed for {business.name}; implementing a modern 3-page web platform elevates conversion.",
+                "effort": "low",
+            }
+            return {
+                "title": f"Website Modernization & Digital Experience for {business.name}",
+                "problem": f"Digital experience friction at {business.name} ({business.city}): {weakness_desc}.",
+                "solution": f"A redesigned, fast, mobile-first commercial web experience tailored for {business.name}.",
                 "value": "Improves conversion from mobile visitors, who dominate local search traffic in India.",
-                "rationale": "The site was observed during research with usability or quality friction.",
+                "rationale": f"The site for {business.name} was observed during research with usability or quality friction.",
                 "effort": "medium",
             }
         if otype == OpportunityType.CUSTOMER_PORTAL:

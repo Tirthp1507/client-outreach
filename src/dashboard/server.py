@@ -7,6 +7,7 @@ import logging
 import mimetypes
 import os
 import urllib.parse
+import uuid
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
@@ -501,8 +502,59 @@ DASHBOARD_HTML = """<!DOCTYPE html>
     </div>
 
     <div style="display: flex; gap: 10px; align-items: center;">
-      <button class="btn btn-primary" onclick="runPipelineCycle()">
-        <span>⚡ Execute Pipeline Cycle</span>
+      <button class="btn btn-primary" onclick="openDiscoveryModal()">
+        <span>📍 Discover Leads & Run Pipeline</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Live Lead Discovery Modal -->
+  <div id="discoveryModal" style="display:none; position:fixed; inset:0; background:rgba(15,23,42,0.85); backdrop-filter:blur(8px); z-index:9999; align-items:center; justify-content:center; padding:16px;">
+    <div style="background:#0f172a; border:1px solid var(--border); border-radius:16px; max-width:460px; width:100%; padding:28px; box-shadow:0 25px 50px rgba(0,0,0,0.6);">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; border-bottom:1px solid var(--border); padding-bottom:12px;">
+        <h3 style="font-size:16px; font-weight:800; color:var(--text);">📍 Run Custom Lead Discovery</h3>
+        <button onclick="closeDiscoveryModal()" style="background:transparent; border:none; color:var(--text-muted); font-size:18px; cursor:pointer;">✕</button>
+      </div>
+
+      <div class="form-group" style="margin-bottom:16px;">
+        <label class="form-label">1. Target City / Location</label>
+        <input id="disc-city" class="form-input" type="text" value="Ahmedabad" placeholder="e.g. Ahmedabad, Mumbai, New York...">
+      </div>
+
+      <div class="form-group" style="margin-bottom:16px;">
+        <label class="form-label">2. Target Business Vertical</label>
+        <select id="disc-category" class="form-select">
+          <option value="all">🌐 All Verticals (Salons, Restaurants, Clinics, Gyms, Coaching, Retail)</option>
+          <option value="salon">✂️ Salons & Spas</option>
+          <option value="restaurant">🍽️ Restaurants & Cafes</option>
+          <option value="clinic">⚕️ Clinics & Hospitals</option>
+          <option value="gym">🏋️‍♂️ Gyms & Fitness Centers</option>
+          <option value="coaching">🎓 Coaching Academies</option>
+          <option value="retail">🛍️ Retail & Supermarkets</option>
+        </select>
+      </div>
+
+      <div class="form-group" style="margin-bottom:16px;">
+        <label class="form-label">3. Lead Discovery Source</label>
+        <select id="disc-provider" class="form-select">
+          <option value="google_places">🗺️ Google Places API (100% Real Verified Google Maps Data)</option>
+          <option value="live">⚡ Live Search & OpenStreetMap (Real Public Leads)</option>
+          <option value="sample">🧪 Sample Preset Fixtures (Testing Mode)</option>
+        </select>
+      </div>
+
+      <div class="form-group" style="margin-bottom:24px;">
+        <label class="form-label">4. Max Leads to Ingest</label>
+        <select id="disc-limit" class="form-select">
+          <option value="3">3 Leads</option>
+          <option value="5">5 Leads</option>
+          <option value="10" selected>10 Leads</option>
+          <option value="15">15 Leads</option>
+        </select>
+      </div>
+
+      <button class="btn btn-primary" style="width:100%; padding:14px; font-size:14px; font-weight:700; justify-content:center;" onclick="executeLiveDiscovery()">
+        🚀 Start Live Discovery & Generate 3-Page Website Demos
       </button>
     </div>
   </div>
@@ -631,7 +683,7 @@ DASHBOARD_HTML = """<!DOCTYPE html>
 
               <div class="form-group">
                 <label class="form-label">Prospect Recipient Email</label>
-                <input id="edit-recipient-email" class="form-input" type="email">
+                <input id="edit-recipient-email" class="form-input" type="email" placeholder="Enter target prospect email address...">
               </div>
 
               <div class="form-group">
@@ -1096,16 +1148,35 @@ DASHBOARD_HTML = """<!DOCTYPE html>
       }
     }
 
-    async function runPipelineCycle() {
-      showToast('Executing automated discovery, research, AI analysis, and client-tailored demo generation cycle...');
-      const res = await fetch('/api/b2b/pipeline/run', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ provider: 'sample', limit: 5 })
-      });
-      const data = await res.json();
-      showToast(`Cycle complete: ${data.opportunities_count || 0} opportunities analyzed & interactive demos ready.`);
-      loadLeads();
+    function openDiscoveryModal() {
+      document.getElementById('discoveryModal').style.display = 'flex';
+    }
+
+    function closeDiscoveryModal() {
+      document.getElementById('discoveryModal').style.display = 'none';
+    }
+
+    async function executeLiveDiscovery() {
+      const city = document.getElementById('disc-city').value.trim() || 'Ahmedabad';
+      const category = document.getElementById('disc-category').value;
+      const provider = document.getElementById('disc-provider').value;
+      const limit = parseInt(document.getElementById('disc-limit').value, 10);
+
+      closeDiscoveryModal();
+      showToast(`Searching '${category}' in '${city}'... Running AI research & generating 3-page website prototypes.`);
+
+      try {
+        const res = await fetch('/api/b2b/pipeline/run', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ city, category, provider, limit })
+        });
+        const data = await res.json();
+        showToast(`Discovery complete! ${data.businesses_count || 0} leads saved, ${data.demos_count || 0} 3-page website demos ready.`);
+        loadLeads();
+      } catch (err) {
+        showToast('Error during discovery execution: ' + err.message);
+      }
     }
 
     async function loadResponsesAndFollowups() {
@@ -1470,11 +1541,19 @@ class DashboardHandler(BaseHTTPRequestHandler):
             city = data.get("city", "Ahmedabad")
             category = data.get("category", "clinic")
 
+            print("\n" + "=" * 80)
+            print(f"🚀 [STARTING B2B ACQUISITION PIPELINE] Location: '{city}' | Category: '{category}' | Limit: {limit}")
+            print("=" * 80)
+
             if provider_name == "sample":
+                print("\n📍 [PHASE 1: LEAD DISCOVERY] Loading sample fixture dataset...")
                 build_sample_business_dataset(self.db)
                 businesses = sample_business_records()[:limit]
                 research_list = generate_sample_research()[:limit]
+                print(f"  ▶ Phase 1 Complete: Loaded {len(businesses)} sample business leads.")
+                print(f"  ▶ Phase 2 Complete: Loaded {len(research_list)} sample research dossiers.")
             else:
+                print(f"\n📍 [PHASE 1: LEAD DISCOVERY] Searching live leads for category: '{category}' in city: '{city}'...")
                 disc_service = DiscoveryService(db=self.db)
                 res = disc_service.ingest_leads(
                     provider_name=provider_name,
@@ -1484,18 +1563,32 @@ class DashboardHandler(BaseHTTPRequestHandler):
                 )
                 businesses = res.businesses
                 if not businesses:
-                    businesses = self.db.list_businesses(status=BusinessStatus.DISCOVERED, limit=limit)
+                    businesses = self.db.list_businesses(limit=limit)
+
+                print(f"  ▶ Phase 1 Complete: {len(businesses)} business leads active for pipeline.")
+
+                print(f"\n🔬 [PHASE 2: DEEP RESEARCH & ENRICHMENT] Performing deep web research on {len(businesses)} businesses...")
                 research_provider = ResearchRegistry.get("http_web") or HTTPWebResearchProvider()
                 research_list = []
-                for b in businesses:
-                    r = research_provider.research(b)
-                    self.db.save_business_research(r)
-                    self.db.update_business_status(b.id, BusinessStatus.RESEARCHED)
+                for idx, b in enumerate(businesses, 1):
+                    r = self.db.get_business_research(b.id)
+                    if not r:
+                        print(f"  [{idx}/{len(businesses)}] Researching: {b.name} ({b.city})...")
+                        r = research_provider.research(b)
+                        self.db.save_business_research(r)
+                        self.db.update_business_status(b.id, BusinessStatus.RESEARCHED)
+                    else:
+                        print(f"  [{idx}/{len(businesses)}] Retained Research Dossier: {b.name} ({b.city})...")
                     research_list.append(r)
+                    print(f"     ├─ Fact Claims Gathered: {len(r.evidence)} evidence points")
+                    print(f"     ├─ Contact Email: {b.email}")
+                    print(f"     └─ Phone: {b.phone}")
+
+                print(f"  ▶ Phase 2 Complete: {len(research_list)} research dossiers stored.")
 
             # Run Intelligence Bundle
             intel = BusinessIntelligenceService(db=self.db)
-            ctx = BusinessCycleContext()
+            ctx = BusinessCycleContext(cycle_id=f"cycle_{uuid.uuid4().hex[:8]}")
             opps = intel.run_analysis_step(ctx, research_list)
             demos = intel.run_demo_step(ctx, opps)
             drafts = intel.run_outreach_step(ctx, demos)
@@ -1581,7 +1674,8 @@ class DashboardHandler(BaseHTTPRequestHandler):
         # 7. Follow-up Operations
         if path == "/api/b2b/followups/stage":
             intel = BusinessIntelligenceService(db=self.db)
-            ctx = BusinessCycleContext()
+            ctx = BusinessCycleContext(cycle_id=f"cycle_{uuid.uuid4().hex[:8]}")
+            staged, plans = intel.followup_step(ctx)
             staged, plans = intel.followup_step(ctx)
             self._send_json({
                 "staged_count": len(staged),

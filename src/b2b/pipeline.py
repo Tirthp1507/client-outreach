@@ -92,8 +92,9 @@ class BusinessIntelligenceService(BusinessPipelineIntent):
         **kwargs: Any,
     ) -> List[OpportunityRecord]:
         """Analyze + score researched businesses into persisted opportunities."""
+        print(f"\n🤖 [PHASE 3: AI OPPORTUNITY SCORING] Scoring {len(research_list)} business dossiers...")
         records: List[OpportunityRecord] = []
-        for research in research_list:
+        for idx, research in enumerate(research_list, 1):
             business = self.db.get_business(research.business_id)
             if business is None:
                 ctx.errors.append(f"run_analysis_step: no business {research.business_id}")
@@ -103,6 +104,7 @@ class BusinessIntelligenceService(BusinessPipelineIntent):
                 ctx.stats.setdefault("insufficient_evidence", []).append(
                     {"business_id": business.id, "reason": result.insufficient_reason})
                 self.db.update_business_status(business.id, BusinessStatus.ANALYZED)
+                print(f"  [{idx}/{len(research_list)}] {business.name}: Insufficient evidence ({result.insufficient_reason})")
                 continue
             scored = self.scorer.score(result, business, research)
             if scored is None:
@@ -110,8 +112,12 @@ class BusinessIntelligenceService(BusinessPipelineIntent):
             opp = self._persist_opportunity(scored)
             records.append(opp)
             self.db.update_business_status(business.id, BusinessStatus.SCORED)
+            print(f"  [{idx}/{len(research_list)}] {business.name} -> Score: {scored.score:.1f}/100 | Qualification: {opp.qualification_status.value} | Type: {opp.opportunity_type.value}")
+            print(f"     ├─ Gap Identified: {opp.problem_summary[:80]}...")
+            print(f"     └─ Proposed Solution: {opp.proposed_solution[:80]}...")
         ctx.opportunities.extend(records)
         ctx.stats["opportunities"] = len(records)
+        print(f"  ▶ Phase 3 Complete: {len(records)} opportunities analyzed & scored.")
         return records
 
     def run_demo_step(
@@ -121,8 +127,9 @@ class BusinessIntelligenceService(BusinessPipelineIntent):
         **kwargs: Any,
     ) -> List[DemoRecord]:
         """Generate real prototypes for QUALIFIED opportunities on/above the score floor."""
+        print(f"\n🎨 [PHASE 4: 3-PAGE COMMERCIAL PROTOTYPE GENERATION] Generating prototypes for {len(opportunities)} qualified leads...")
         demos: List[DemoRecord] = []
-        for opp in opportunities:
+        for idx, opp in enumerate(opportunities, 1):
             if opp.qualification_status != QualificationStatus.QUALIFIED:
                 ctx.stats.setdefault("demos_skipped_not_qualified", []).append(opp.id)
                 continue
@@ -137,13 +144,20 @@ class BusinessIntelligenceService(BusinessPipelineIntent):
             qa = self.quality_demo.check(demo, artifact_root=PROJECT_ROOT)
             if not qa.passed:
                 ctx.errors.append(f"demo quality gate failed for {demo.id}: {qa.issues}")
+                print(f"  [{idx}/{len(opportunities)}] {business.name}: Demo QA failed ({qa.issues})")
                 continue
             self.db.save_demo(demo)
             demos.append(demo)
             self.db.update_business_status(business.id, BusinessStatus.DEMO_READY)
             ctx.stats.setdefault("demo_stats", {})
+            print(f"  [{idx}/{len(opportunities)}] {business.name} -> 3-Page Website Prototype Generated!")
+            print(f"     ├─ Page 1: index.html (Home Showcase & Booker)")
+            print(f"     ├─ Page 2: services.html (Interactive Rate Card)")
+            print(f"     ├─ Page 3: about.html (Brand Story & Specialist Team)")
+            print(f"     └─ Saved to: output/demos/{demo.id}/")
         ctx.demos.extend(demos)
         ctx.stats["demos"] = len(demos)
+        print(f"  ▶ Phase 4 Complete: {len(demos)} multi-page commercial prototypes created.")
         return demos
 
     def run_outreach_step(
@@ -153,8 +167,9 @@ class BusinessIntelligenceService(BusinessPipelineIntent):
         **kwargs: Any,
     ) -> List[OutreachRecord]:
         """Generate personalized outreach variants and place them in the approval queue."""
+        print(f"\n✉️ [PHASE 5: PERSONALIZED AI OUTREACH DRAFTING] Drafting email copy for {len(demos)} prototypes...")
         drafts: List[OutreachRecord] = []
-        for demo in demos:
+        for idx, demo in enumerate(demos, 1):
             business = self.db.get_business(demo.business_id)
             opp = self.db.get_opportunity(demo.opportunity_id)
             research = self.db.get_business_research(demo.business_id)
@@ -170,8 +185,17 @@ class BusinessIntelligenceService(BusinessPipelineIntent):
                 self.db.save_outreach(record)
                 drafts.append(record)
                 self.db.update_business_status(business.id, BusinessStatus.OUTREACH_READY)
+                print(f"  [{idx}/{len(demos)}] {business.name} -> Outreach Email Drafted!")
+                print(f"     ├─ Recipient: {record.recipient_email}")
+                print(f"     ├─ Subject: {record.subject}")
+                print(f"     └─ Status: {record.approval_status.value} (Placed in Approval Queue)")
         ctx.outreach_drafts.extend(drafts)
         ctx.stats["outreach_drafts"] = len(drafts)
+        print(f"  ▶ Phase 5 Complete: {len(drafts)} email drafts created.")
+        print("\n" + "=" * 80)
+        print(f"🎉 PIPELINE CYCLE COMPLETE — {len(drafts)} Opportunities Ready in Approval Studio!")
+        print("👉 Open Dashboard: http://127.0.0.1:8585")
+        print("=" * 80 + "\n")
         return drafts
 
     def run_response_tracking_step(

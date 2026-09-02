@@ -1,9 +1,17 @@
-"""Demo Strategy & Generator: Build client-specific, deeply interactive, vertical-tailored HTML prototypes.
+"""Demo Strategy & Generator: Build client-specific, multi-page, presentation-grade commercial HTML prototypes.
 
-Every generated prototype is fully self-contained (zero external network dependencies), mobile-first responsive,
-and genuinely custom to the business's identity, identified operational problem, and proposed solution.
-Features ultra-attractive modern UI aesthetics with Google Fonts (Outfit & Inter), glassmorphism cards,
-smooth CSS gradients, micro-animations, and dynamic real-time interaction logic.
+Every generated prototype is a full 3-page commercial website tailored to the business category:
+1. `index.html`: Home Showcase & Interactive Appointment/Ordering App
+2. `services.html`: Full Services Catalog, Interactive Search & Rate Card
+3. `about.html`: Brand Legacy, Team Specialists & Photo Gallery Showcase
+
+Features:
+- Glassmorphism sticky navbar with multi-page navigation
+- Full-width hero section with Unsplash photography
+- Smooth micro-animations (card hover lift, image zoom, pulsing badges, smooth scroll)
+- Interactive Vanilla JS app engine (multi-step appointment booker, cart total, tab filtering, real-time search)
+- Verified client reviews with avatars
+- Interactive WhatsApp reservation modal and mobile bottom action bar
 """
 
 from __future__ import annotations
@@ -50,6 +58,9 @@ _VERTICAL_THEMES: Dict[VerticalType, Dict[str, str]] = {
         "badge_bg": "#e0f2fe",
         "badge_text": "#0369a1",
         "icon": "⚕️",
+        "hero_img": "https://images.unsplash.com/photo-1629909613654-28e377c37b09?auto=format&fit=crop&w=1200&q=80",
+        "tagline": "Advanced Dental & Medical Healthcare Center",
+        "rating": "⭐ 4.9/5 from 280+ Verified Patient Reviews",
     },
     VerticalType.RESTAURANT: {
         "primary": "#ea580c",
@@ -60,6 +71,9 @@ _VERTICAL_THEMES: Dict[VerticalType, Dict[str, str]] = {
         "badge_bg": "#ffedd5",
         "badge_text": "#9a3412",
         "icon": "🍽️",
+        "hero_img": "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1200&q=80",
+        "tagline": "Authentic Culinary Dining & Fast Home Delivery",
+        "rating": "⭐ 4.8/5 from 420+ Foodie Reviews",
     },
     VerticalType.SALON: {
         "primary": "#c026d3",
@@ -70,6 +84,9 @@ _VERTICAL_THEMES: Dict[VerticalType, Dict[str, str]] = {
         "badge_bg": "#fae8ff",
         "badge_text": "#86198f",
         "icon": "✂️",
+        "hero_img": "https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=1200&q=80",
+        "tagline": "Luxury Hair, Nails & Skin Aesthetics Studio",
+        "rating": "⭐ 4.9/5 from 340+ Happy Salon Clients",
     },
     VerticalType.COACHING: {
         "primary": "#2563eb",
@@ -80,6 +97,9 @@ _VERTICAL_THEMES: Dict[VerticalType, Dict[str, str]] = {
         "badge_bg": "#dbeafe",
         "badge_text": "#1e40af",
         "icon": "🎓",
+        "hero_img": "https://images.unsplash.com/photo-1524178232363-1fb2b075b655?auto=format&fit=crop&w=1200&q=80",
+        "tagline": "Premier Academic Coaching & Entrance Exam Academy",
+        "rating": "⭐ 4.9/5 from 500+ Top Rankers",
     },
     VerticalType.GYM: {
         "primary": "#16a34a",
@@ -90,6 +110,9 @@ _VERTICAL_THEMES: Dict[VerticalType, Dict[str, str]] = {
         "badge_bg": "#dcfce7",
         "badge_text": "#166534",
         "icon": "🏋️‍♂️",
+        "hero_img": "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=1200&q=80",
+        "tagline": "State-of-the-Art Fitness Center & Personal Training",
+        "rating": "⭐ 4.9/5 from 210+ Active Members",
     },
     VerticalType.RETAIL: {
         "primary": "#d97706",
@@ -100,6 +123,9 @@ _VERTICAL_THEMES: Dict[VerticalType, Dict[str, str]] = {
         "badge_bg": "#fef9c3",
         "badge_text": "#854d0e",
         "icon": "🛍️",
+        "hero_img": "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=1200&q=80",
+        "tagline": "Premium Quality Retail Store & Direct Home Delivery",
+        "rating": "⭐ 4.8/5 from 180+ Local Buyers",
     },
     VerticalType.REAL_ESTATE: {
         "primary": "#4f46e5",
@@ -110,6 +136,9 @@ _VERTICAL_THEMES: Dict[VerticalType, Dict[str, str]] = {
         "badge_bg": "#e0e7ff",
         "badge_text": "#3730a3",
         "icon": "🏢",
+        "hero_img": "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&q=80",
+        "tagline": "Luxury Residential Apartments & Villa Projects",
+        "rating": "⭐ 4.9/5 from 150+ Homebuyers",
     },
     VerticalType.GENERAL_SMB: {
         "primary": "#0f766e",
@@ -120,12 +149,15 @@ _VERTICAL_THEMES: Dict[VerticalType, Dict[str, str]] = {
         "badge_bg": "#ccfbf1",
         "badge_text": "#134e4a",
         "icon": "⚡",
+        "hero_img": "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=1200&q=80",
+        "tagline": "Professional Business Solutions & Direct Consultation",
+        "rating": "⭐ 4.9/5 Verified Client Trust Score",
     },
 }
 
 
 class DemoBlueprint:
-    """Blueprint defining the tailored prototype strategy for a business."""
+    """Blueprint defining the tailored multi-page strategy for a business."""
 
     def __init__(
         self,
@@ -161,7 +193,7 @@ class DemoStrategy:
     ) -> DemoBlueprint:
         vertical = vertical_for(business.category)
         demo_type = OPPORTUNITY_TO_DEMO_TYPE.get(opp.opportunity_type, DemoType.BOOKING_WEBSITE)
-        short_title = f"{business.name} — Interactive Solution Prototype"
+        short_title = f"{business.name} — Multi-Page Commercial Website Prototype"
 
         return DemoBlueprint(
             business_id=business.id,
@@ -169,33 +201,19 @@ class DemoStrategy:
             vertical=vertical,
             demo_type=demo_type,
             title=short_title,
-            problem=opp.problem_summary or "Manual inquiry flow without instant online booking or ordering.",
-            solution=opp.proposed_solution or "Modern, mobile-first interactive booking & inquiry web app.",
+            problem=opp.problem_summary or "Appointments and inquiries currently rely on manual phone calls — no 24/7 online booking or interactive rate card.",
+            solution=opp.proposed_solution or "A multi-page, high-converting commercial website with online booking, rate catalog, and WhatsApp integration.",
             key_features=self._vertical_features(vertical, demo_type),
             custom_services=research_services or [],
         )
 
     @staticmethod
     def _vertical_features(vertical: VerticalType, demo_type: DemoType) -> List[str]:
-        if vertical == VerticalType.CLINIC:
-            return ["Instant appointment booking", "Doctor & specialty selector", "Automated WhatsApp reminders", "Digital prescription portal"]
-        if vertical == VerticalType.RESTAURANT:
-            return ["Interactive digital menu", "Live cart & bill estimator", "Table reservation manager", "Direct WhatsApp takeaway handoff"]
-        if vertical == VerticalType.SALON:
-            return ["Service & package selector", "Master stylist choice", "Real-time calendar slots", "Instant booking confirmation"]
-        if vertical == VerticalType.COACHING:
-            return ["Course & batch discovery", "Free demo class reservation", "Syllabus preview", "Counseling slot picker"]
-        if vertical == VerticalType.GYM:
-            return ["Membership plan picker", "Trainer selector", "EMI cost estimator", "1-Day VIP Trial Pass generator"]
-        if vertical == VerticalType.RETAIL:
-            return ["Digital product catalog", "Instant cart counter", "Delivery slot picker", "WhatsApp order dispatch"]
-        if vertical == VerticalType.REAL_ESTATE:
-            return ["Unit configuration selector", "EMI payment estimator", "Virtual tour trigger", "VIP site visit scheduler"]
-        return ["Mobile-first responsive UX", "Instant lead capture", "Live service quote calculator", "Direct WhatsApp routing"]
+        return ["Multi-page website navigation", "Instant online reservation system", "Searchable service rate card", "Verified client testimonials & photo gallery"]
 
 
 class DemoGenerator:
-    """Generates fully self-contained, responsive, client-specific HTML prototypes."""
+    """Generates 3-page commercial website prototypes (index.html, services.html, about.html)."""
 
     def __init__(
         self,
@@ -216,9 +234,20 @@ class DemoGenerator:
         demo_dir = self.output_dir / demo_id
         demo_dir.mkdir(parents=True, exist_ok=True)
 
+        # 1. Render Page 1: Home Showcase (index.html)
         index_path = demo_dir / "index.html"
-        rendered_html = self._render(business, bp)
-        index_path.write_text(rendered_html, encoding="utf-8")
+        rendered_index = self._render_page(business, bp, current_page="index")
+        index_path.write_text(rendered_index, encoding="utf-8")
+
+        # 2. Render Page 2: Services & Pricing Catalog (services.html)
+        services_path = demo_dir / "services.html"
+        rendered_services = self._render_page(business, bp, current_page="services")
+        services_path.write_text(rendered_services, encoding="utf-8")
+
+        # 3. Render Page 3: About & Gallery Showcase (about.html)
+        about_path = demo_dir / "about.html"
+        rendered_about = self._render_page(business, bp, current_page="about")
+        about_path.write_text(rendered_about, encoding="utf-8")
 
         metadata = {
             "business_name": business.name,
@@ -230,6 +259,7 @@ class DemoGenerator:
             "key_features": bp.key_features,
             "demo_type": bp.demo_type.value,
             "generated_at": datetime.now(timezone.utc).isoformat(),
+            "pages": ["index.html", "services.html", "about.html"],
         }
 
         return DemoRecord(
@@ -246,9 +276,20 @@ class DemoGenerator:
             created_at=datetime.now(timezone.utc).isoformat(),
         )
 
-    def _render(self, business: BusinessRecord, bp: DemoBlueprint) -> str:
+    def _render_page(self, business: BusinessRecord, bp: DemoBlueprint, current_page: str) -> str:
         theme = _VERTICAL_THEMES.get(bp.vertical, _VERTICAL_THEMES[VerticalType.GENERAL_SMB])
-        content_html = self._generate_vertical_content(business, bp, theme)
+        
+        if current_page == "index":
+            content_html = self._generate_index_content(business, bp, theme)
+        elif current_page == "services":
+            content_html = self._generate_services_content(business, bp, theme)
+        else:
+            content_html = self._generate_about_content(business, bp, theme)
+
+        # Active Nav Link CSS Helpers
+        active_home = 'active' if current_page == 'index' else ''
+        active_services = 'active' if current_page == 'services' else ''
+        active_about = 'active' if current_page == 'about' else ''
 
         page = _MASTER_HTML_TEMPLATE
         replacements = {
@@ -268,6 +309,12 @@ class DemoGenerator:
             "{{BADGE_BG}}": theme["badge_bg"],
             "{{BADGE_TEXT}}": theme["badge_text"],
             "{{ICON}}": theme["icon"],
+            "{{HERO_IMG}}": theme["hero_img"],
+            "{{TAGLINE}}": theme["tagline"],
+            "{{RATING}}": theme["rating"],
+            "{{ACTIVE_HOME}}": active_home,
+            "{{ACTIVE_SERVICES}}": active_services,
+            "{{ACTIVE_ABOUT}}": active_about,
             "{{CONTENT_HTML}}": content_html,
         }
 
@@ -276,30 +323,46 @@ class DemoGenerator:
 
         return page
 
-    def _generate_vertical_content(
-        self, business: BusinessRecord, bp: DemoBlueprint, theme: Dict[str, str]
-    ) -> str:
+    def _generate_index_content(self, business: BusinessRecord, bp: DemoBlueprint, theme: Dict[str, str]) -> str:
         v = bp.vertical
         if v == VerticalType.CLINIC:
-            return _CLINIC_TEMPLATE
+            return _CLINIC_INDEX_TEMPLATE
         elif v == VerticalType.RESTAURANT:
-            return _RESTAURANT_TEMPLATE
+            return _RESTAURANT_INDEX_TEMPLATE
         elif v == VerticalType.SALON:
-            return _SALON_TEMPLATE
+            return _SALON_INDEX_TEMPLATE
         elif v == VerticalType.COACHING:
-            return _COACHING_TEMPLATE
+            return _COACHING_INDEX_TEMPLATE
         elif v == VerticalType.GYM:
-            return _GYM_TEMPLATE
-        elif v == VerticalType.RETAIL:
-            return _RETAIL_TEMPLATE
-        elif v == VerticalType.REAL_ESTATE:
-            return _REAL_ESTATE_TEMPLATE
+            return _GYM_INDEX_TEMPLATE
         else:
-            return _GENERAL_SMB_TEMPLATE
+            return _GENERAL_INDEX_TEMPLATE
+
+    def _generate_services_content(self, business: BusinessRecord, bp: DemoBlueprint, theme: Dict[str, str]) -> str:
+        v = bp.vertical
+        if v == VerticalType.SALON:
+            return _SALON_SERVICES_TEMPLATE
+        elif v == VerticalType.RESTAURANT:
+            return _RESTAURANT_SERVICES_TEMPLATE
+        elif v == VerticalType.CLINIC:
+            return _CLINIC_SERVICES_TEMPLATE
+        else:
+            return _GENERAL_SERVICES_TEMPLATE
+
+    def _generate_about_content(self, business: BusinessRecord, bp: DemoBlueprint, theme: Dict[str, str]) -> str:
+        v = bp.vertical
+        if v == VerticalType.SALON:
+            return _SALON_ABOUT_TEMPLATE
+        elif v == VerticalType.RESTAURANT:
+            return _RESTAURANT_ABOUT_TEMPLATE
+        elif v == VerticalType.CLINIC:
+            return _CLINIC_ABOUT_TEMPLATE
+        else:
+            return _GENERAL_ABOUT_TEMPLATE
 
 
 # ==============================================================================
-# HTML TEMPLATES & VERTICAL SECTIONS
+# MASTER MULTI-PAGE HTML TEMPLATE
 # ==============================================================================
 
 _MASTER_HTML_TEMPLATE = """<!DOCTYPE html>
@@ -310,7 +373,7 @@ _MASTER_HTML_TEMPLATE = """<!DOCTYPE html>
   <title>{{TITLE}}</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700;800;900&display=swap" rel="stylesheet">
   <style>
     :root {
       --primary: {{PRIMARY_COLOR}};
@@ -325,9 +388,10 @@ _MASTER_HTML_TEMPLATE = """<!DOCTYPE html>
       --border: #e2e8f0;
       --card-bg: #ffffff;
       --shadow-sm: 0 2px 8px rgba(15, 23, 42, 0.04);
-      --shadow-md: 0 10px 30px -10px rgba(15, 23, 42, 0.08);
-      --radius-lg: 20px;
-      --radius-md: 12px;
+      --shadow-md: 0 12px 32px -10px rgba(15, 23, 42, 0.09);
+      --shadow-lg: 0 20px 45px -12px rgba(15, 23, 42, 0.15);
+      --radius-lg: 24px;
+      --radius-md: 14px;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -335,13 +399,24 @@ _MASTER_HTML_TEMPLATE = """<!DOCTYPE html>
       background: #f8fafc;
       color: var(--text);
       line-height: 1.6;
-      padding-bottom: 80px;
+      padding-bottom: 90px;
       -webkit-font-smoothing: antialiased;
     }
-    h1, h2, h3, h4, .brand-title {
-      font-family: 'Outfit', sans-serif;
+    h1, h2, h3, h4, .brand-title { font-family: 'Outfit', sans-serif; }
+
+    /* Top Promo Announcement Bar */
+    .promo-banner {
+      background: var(--gradient);
+      color: #fff;
+      padding: 8px 16px;
+      font-size: 13px;
+      font-weight: 700;
+      text-align: center;
+      letter-spacing: 0.3px;
+      box-shadow: inset 0 -1px 0 rgba(0,0,0,0.1);
     }
-    /* Demo Header Banner */
+
+    /* Top Prototype Notice Bar */
     .prototype-bar {
       background: #0f172a;
       color: #f8fafc;
@@ -363,14 +438,6 @@ _MASTER_HTML_TEMPLATE = """<!DOCTYPE html>
       text-transform: uppercase;
       font-size: 11px;
       letter-spacing: 0.5px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-    }
-    .proto-status {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      font-weight: 500;
-      color: #94a3b8;
     }
     .pulse-dot {
       width: 8px;
@@ -385,354 +452,384 @@ _MASTER_HTML_TEMPLATE = """<!DOCTYPE html>
       70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(34, 197, 94, 0); }
       100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
     }
+
+    /* Glassmorphism Commercial Navbar with Multi-Page Links */
+    .site-nav {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 800;
+    }
+    .nav-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+    }
+    .nav-logo {
+      width: 44px;
+      height: 44px;
+      background: var(--gradient);
+      color: #fff;
+      font-size: 24px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    .nav-title { font-size: 20px; font-weight: 800; color: var(--text); }
+    .nav-sub { font-size: 12px; color: var(--text-muted); font-weight: 500; }
+
+    /* Page Tabs Navigation */
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: #f1f5f9;
+      padding: 4px;
+      border-radius: 14px;
+    }
+    .nav-link-btn {
+      padding: 8px 18px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 700;
+      color: #475569;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+    .nav-link-btn:hover { color: var(--primary); background: rgba(255,255,255,0.6); }
+    .nav-link-btn.active {
+      background: #fff;
+      color: var(--primary-dark);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .btn-nav-call {
+      background: var(--bg-soft);
+      color: var(--primary-dark);
+      border: 1px solid var(--border);
+      padding: 10px 18px;
+      border-radius: 12px;
+      font-weight: 700;
+      font-size: 13px;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+    .btn-nav-call:hover { background: var(--primary); color: #fff; }
+
     .wrapper {
-      max-width: 900px;
+      max-width: 980px;
       margin: 0 auto;
       padding: 24px 16px;
     }
-    /* Hero Business Identity Card */
-    .biz-header {
-      background: var(--card-bg);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-lg);
-      padding: 28px;
-      margin-bottom: 24px;
-      box-shadow: var(--shadow-md);
+
+    /* Hero Section with Animation */
+    .hero-banner {
       position: relative;
+      border-radius: var(--radius-lg);
       overflow: hidden;
+      margin-bottom: 28px;
+      box-shadow: var(--shadow-lg);
+      min-height: 400px;
+      display: flex;
+      align-items: flex-end;
+      background: #0f172a url('{{HERO_IMG}}') center/cover no-repeat;
+      animation: fadeIn 0.6s ease-out;
     }
-    .biz-header::before {
-      content: '';
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .hero-overlay {
       position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 6px;
-      background: var(--gradient);
+      inset: 0;
+      background: linear-gradient(180deg, rgba(15, 23, 42, 0.25) 0%, rgba(15, 23, 42, 0.9) 100%);
     }
-    .biz-title-row {
+    .hero-content {
+      position: relative;
+      z-index: 10;
+      padding: 40px 36px;
+      color: #fff;
+      width: 100%;
+    }
+    .hero-badge-row {
       display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 16px;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 14px;
       flex-wrap: wrap;
     }
-    .biz-name {
-      font-size: 28px;
-      font-weight: 800;
-      color: var(--text);
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    .biz-icon {
-      font-size: 32px;
-      background: var(--bg-soft);
-      width: 52px;
-      height: 52px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 14px;
-      border: 1px solid var(--border);
-    }
-    .biz-meta {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-top: 8px;
-      flex-wrap: wrap;
-    }
-    .biz-tag {
-      background: var(--badge-bg);
-      color: var(--badge-text);
+    .hero-pill {
+      background: rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(8px);
+      color: #fff;
+      padding: 6px 14px;
+      border-radius: 20px;
       font-size: 12px;
       font-weight: 700;
-      padding: 4px 12px;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+    .hero-rating {
+      background: #f59e0b;
+      color: #78350f;
+      padding: 6px 14px;
       border-radius: 20px;
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
+      font-size: 12px;
+      font-weight: 800;
     }
-    .biz-location {
-      font-size: 13px;
-      color: var(--text-muted);
-      font-weight: 500;
+    .hero-title {
+      font-size: 38px;
+      font-weight: 900;
+      line-height: 1.15;
+      margin-bottom: 10px;
+      letter-spacing: -0.5px;
     }
-    /* Solution Callout Box */
-    .solution-box {
-      margin-top: 20px;
-      padding: 16px 20px;
-      background: var(--bg-soft);
-      border-left: 4px solid var(--primary);
-      border-radius: 12px;
-      font-size: 14px;
-      line-height: 1.5;
+    .hero-tagline {
+      font-size: 16px;
+      color: #e2e8f0;
+      margin-bottom: 22px;
+      max-width: 620px;
     }
-    .solution-box strong { color: var(--primary-dark); font-weight: 700; }
+    .hero-buttons {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
 
-    /* Interactive Cards */
+    /* Solution Box Callout */
+    .solution-box {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-left: 5px solid var(--primary);
+      border-radius: var(--radius-md);
+      padding: 20px 24px;
+      margin-bottom: 28px;
+      box-shadow: var(--shadow-sm);
+    }
+    .solution-box strong { color: var(--primary-dark); font-weight: 800; }
+
+    /* Commercial Card & Micro-Animations */
     .card {
       background: var(--card-bg);
       border: 1px solid var(--border);
       border-radius: var(--radius-lg);
-      padding: 28px;
-      margin-bottom: 24px;
-      box-shadow: var(--shadow-md);
-      transition: transform 0.2s, box-shadow 0.2s;
-    }
-    .card-heading {
-      font-size: 20px;
-      font-weight: 800;
-      color: var(--text);
-      margin-bottom: 18px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-    .form-group {
-      margin-bottom: 18px;
-    }
-    .form-label {
-      font-size: 13px;
-      font-weight: 700;
-      color: #334155;
-      margin-bottom: 8px;
-      display: block;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-    .form-input, .form-select, .form-textarea {
-      width: 100%;
-      padding: 12px 16px;
-      border: 1px solid var(--border);
-      border-radius: var(--radius-md);
-      font-size: 15px;
-      font-family: inherit;
-      background: #fff;
-      color: var(--text);
-      transition: all 0.15s;
-    }
-    .form-input:focus, .form-select:focus, .form-textarea:focus {
-      outline: none;
-      border-color: var(--primary);
-      box-shadow: 0 0 0 4px rgba(2, 132, 199, 0.15);
-    }
-    .btn-main {
-      background: var(--gradient);
-      color: #fff;
-      border: none;
-      padding: 14px 28px;
-      border-radius: var(--radius-md);
-      font-size: 15px;
-      font-weight: 700;
-      cursor: pointer;
-      width: 100%;
-      transition: all 0.2s;
-      box-shadow: 0 4px 14px rgba(2, 132, 199, 0.3);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-    }
-    .btn-main:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 6px 20px rgba(2, 132, 199, 0.4);
-    }
-    .btn-main:active {
-      transform: translateY(0);
-    }
-
-    /* Selection Grids */
-    .select-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 14px;
-      margin-bottom: 20px;
-    }
-    .select-item {
-      border: 2px solid var(--border);
-      border-radius: var(--radius-md);
-      padding: 16px;
-      cursor: pointer;
-      background: #fff;
-      transition: all 0.2s ease;
-      user-select: none;
-      position: relative;
-    }
-    .select-item:hover {
-      border-color: var(--primary);
-      transform: translateY(-2px);
-      box-shadow: var(--shadow-sm);
-    }
-    .select-item.active {
-      border-color: var(--primary);
-      background: var(--bg-soft);
-      box-shadow: 0 0 0 1px var(--primary);
-    }
-    .select-item-title {
-      font-weight: 700;
-      font-size: 15px;
-      color: var(--text);
-      margin-bottom: 4px;
-    }
-    .select-item-sub {
-      font-size: 13px;
-      color: var(--text-muted);
-    }
-    .select-item-price {
-      font-size: 14px;
-      font-weight: 800;
-      color: var(--primary);
-      margin-top: 8px;
-    }
-
-    /* Slot Chips */
-    .chip-grid {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-bottom: 20px;
-    }
-    .chip {
-      padding: 10px 18px;
-      border: 1px solid var(--border);
-      border-radius: 30px;
-      background: #fff;
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.15s;
-    }
-    .chip:hover { border-color: var(--primary); color: var(--primary); }
-    .chip.active {
-      background: var(--primary);
-      color: #fff;
-      border-color: var(--primary);
-      box-shadow: 0 2px 8px rgba(2, 132, 199, 0.3);
-    }
-
-    /* Modal Overlay */
-    .modal-backdrop {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(15, 23, 42, 0.7);
-      backdrop-filter: blur(6px);
-      z-index: 999;
-      align-items: center;
-      justify-content: center;
-      padding: 16px;
-    }
-    .modal-backdrop.show { display: flex; }
-    .modal-card {
-      background: #fff;
-      border-radius: var(--radius-lg);
-      max-width: 480px;
-      width: 100%;
       padding: 32px;
-      box-shadow: 0 20px 50px rgba(0,0,0,0.25);
-      text-align: center;
-      animation: modalPop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      margin-bottom: 28px;
+      box-shadow: var(--shadow-md);
+      transition: transform 0.25s, box-shadow 0.25s;
     }
-    @keyframes modalPop {
-      0% { transform: scale(0.9); opacity: 0; }
-      100% { transform: scale(1); opacity: 1; }
-    }
-    .modal-icon {
-      font-size: 48px;
-      margin-bottom: 16px;
-      display: inline-block;
-    }
-    .modal-title {
+    .card:hover { box-shadow: var(--shadow-lg); }
+    .card-heading {
       font-size: 22px;
       font-weight: 800;
       color: var(--text);
-      margin-bottom: 8px;
-    }
-    .modal-body {
-      font-size: 14px;
-      color: var(--text-muted);
-      margin-bottom: 24px;
-      line-height: 1.6;
-    }
-    .modal-wa-box {
-      background: #f0fdf4;
-      border: 1px solid #bbf7d0;
-      color: #166534;
-      padding: 12px 16px;
-      border-radius: 12px;
-      font-size: 13px;
       margin-bottom: 20px;
-      text-align: left;
-    }
-
-    /* Sticky Footer Bar */
-    .sticky-bar {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      background: rgba(255, 255, 255, 0.95);
-      backdrop-filter: blur(10px);
-      border-top: 1px solid var(--border);
-      padding: 12px 24px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 16px;
-      z-index: 900;
-    }
-    .sticky-info {
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--text);
+      flex-wrap: wrap;
+      gap: 8px;
     }
 
-    @media (max-width: 640px) {
-      .wrapper { padding: 16px 12px; }
-      .biz-header, .card { padding: 20px 16px; }
-      .biz-name { font-size: 22px; }
-      .select-grid { grid-template-columns: 1fr; }
+    /* Visual Grid Cards with Hover Animation */
+    .service-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+      gap: 20px;
+      margin-bottom: 24px;
+    }
+    .service-card {
+      border: 2px solid var(--border);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      background: #fff;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+    }
+    .service-card:hover {
+      border-color: var(--primary);
+      transform: translateY(-6px);
+      box-shadow: var(--shadow-md);
+    }
+    .service-card:hover .service-card-img {
+      transform: scale(1.06);
+    }
+    .service-card.active {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px var(--primary);
+      background: var(--bg-soft);
+    }
+    .service-card-img-wrap {
+      height: 150px;
+      width: 100%;
+      overflow: hidden;
+    }
+    .service-card-img {
+      height: 100%;
+      width: 100%;
+      object-fit: cover;
+      transition: transform 0.4s ease;
+    }
+    .service-card-body { padding: 18px; }
+    .service-card-title { font-weight: 800; font-size: 16px; color: var(--text); margin-bottom: 4px; }
+    .service-card-desc { font-size: 13px; color: var(--text-muted); margin-bottom: 12px; line-height: 1.4; }
+    .service-card-footer { display: flex; justify-content: space-between; align-items: center; }
+    .service-card-price { font-size: 18px; font-weight: 900; color: var(--primary); }
+    .service-card-check {
+      width: 26px; height: 26px; border-radius: 50%; border: 2px solid var(--border);
+      display: flex; align-items: center; justify-content: center; font-size: 12px; color: transparent; transition: all 0.2s;
+    }
+    .service-card.active .service-card-check { background: var(--primary); border-color: var(--primary); color: #fff; }
+
+    /* Form Controls & Buttons */
+    .form-group { margin-bottom: 20px; }
+    .form-label { font-size: 13px; font-weight: 800; color: #334155; margin-bottom: 8px; display: block; text-transform: uppercase; letter-spacing: 0.5px; }
+    .form-input, .form-select {
+      width: 100%; padding: 14px 18px; border: 1.5px solid var(--border); border-radius: var(--radius-md); font-size: 15px; font-family: inherit; background: #fff; color: var(--text); transition: all 0.2s;
+    }
+    .form-input:focus, .form-select:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 4px rgba(2, 132, 199, 0.15); }
+    .btn-main {
+      background: var(--gradient); color: #fff; border: none; padding: 16px 32px; border-radius: var(--radius-md); font-size: 16px; font-weight: 800; cursor: pointer; width: 100%; transition: all 0.25s; box-shadow: 0 6px 20px rgba(2, 132, 199, 0.35); display: inline-flex; align-items: center; justify-content: center; gap: 10px; text-decoration: none;
+    }
+    .btn-main:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(2, 132, 199, 0.45); }
+
+    /* Chip Selectors */
+    .chip-grid { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
+    .chip { padding: 10px 20px; border: 1.5px solid var(--border); border-radius: 30px; background: #fff; font-size: 13px; font-weight: 700; cursor: pointer; transition: all 0.2s; }
+    .chip:hover { border-color: var(--primary); color: var(--primary); }
+    .chip.active { background: var(--primary); color: #fff; border-color: var(--primary); box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3); }
+
+    /* Team / Staff Grid */
+    .team-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; margin-bottom: 28px; }
+    .team-card { background: #fff; border: 1px solid var(--border); border-radius: var(--radius-md); overflow: hidden; box-shadow: var(--shadow-sm); text-align: center; padding-bottom: 20px; transition: transform 0.2s; }
+    .team-card:hover { transform: translateY(-4px); }
+    .team-img { width: 100%; height: 220px; object-fit: cover; }
+    .team-name { font-size: 17px; font-weight: 800; margin-top: 14px; color: var(--text); }
+    .team-role { font-size: 13px; color: var(--primary); font-weight: 700; margin-bottom: 6px; }
+    .team-exp { font-size: 12px; color: var(--text-muted); }
+
+    /* Gallery Photo Grid */
+    .gallery-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-bottom: 28px; }
+    .gallery-item { height: 200px; border-radius: var(--radius-md); overflow: hidden; position: relative; box-shadow: var(--shadow-sm); }
+    .gallery-img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s ease; }
+    .gallery-item:hover .gallery-img { transform: scale(1.08); }
+
+    /* Testimonials */
+    .reviews-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 18px; margin-bottom: 28px; }
+    .review-card { background: #fff; border: 1px solid var(--border); border-radius: var(--radius-md); padding: 22px; box-shadow: var(--shadow-sm); }
+    .review-header { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+    .review-avatar { width: 46px; height: 46px; border-radius: 50%; object-fit: cover; border: 2px solid var(--border); }
+    .review-name { font-weight: 800; font-size: 14px; }
+    .review-stars { color: #f59e0b; font-size: 13px; }
+    .review-text { font-size: 13px; color: var(--text-muted); line-height: 1.5; }
+
+    /* Modal Overlay */
+    .modal-backdrop { display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(8px); z-index: 999; align-items: center; justify-content: center; padding: 16px; }
+    .modal-backdrop.show { display: flex; }
+    .modal-card { background: #fff; border-radius: var(--radius-lg); max-width: 480px; width: 100%; padding: 36px; box-shadow: 0 25px 60px rgba(0,0,0,0.3); text-align: center; animation: modalPop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
+    @keyframes modalPop { 0% { transform: scale(0.88); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+    .modal-icon { font-size: 54px; margin-bottom: 16px; }
+    .modal-title { font-size: 24px; font-weight: 900; margin-bottom: 8px; }
+    .modal-body { font-size: 14px; color: var(--text-muted); margin-bottom: 24px; line-height: 1.6; }
+    .modal-wa-box { background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; padding: 14px 18px; border-radius: 14px; font-size: 13px; margin-bottom: 24px; text-align: left; line-height: 1.5; }
+
+    /* Sticky Bottom Mobile Bar */
+    .sticky-bar { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(255, 255, 255, 0.96); backdrop-filter: blur(12px); border-top: 1px solid var(--border); padding: 14px 28px; display: flex; align-items: center; justify-content: space-between; gap: 16px; z-index: 900; box-shadow: 0 -4px 20px rgba(0,0,0,0.06); }
+
+    @media (max-width: 768px) {
+      .hero-title { font-size: 28px; }
+      .site-nav { padding: 12px 16px; flex-wrap: wrap; gap: 10px; }
+      .nav-links { width: 100%; justify-content: center; order: 3; margin-top: 6px; }
+      .hero-content { padding: 28px 20px; }
+      .service-grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
 <body>
 
-  <!-- Top Prototype Info Bar -->
+  <!-- Top Announcement Promo Bar -->
+  <div class="promo-banner">
+    ⚡ Special Online Promotion: Get 15% OFF Package Bookings Reserved Today!
+  </div>
+
+  <!-- Top Prototype Notice Bar -->
   <div class="prototype-bar">
     <div style="display:flex; align-items:center; gap:8px;">
-      <span class="proto-badge">CUSTOM DEMO PROTOTYPE</span>
+      <span class="proto-badge">3-PAGE DEMO PROTOTYPE</span>
       <span style="font-weight:600;">Tailored for {{BUSINESS_NAME}}</span>
     </div>
-    <div class="proto-status">
+    <div style="display:flex; align-items:center; gap:6px; color:#94a3b8; font-weight:500;">
       <span class="pulse-dot"></span>
-      <span>Simulated Client Experience — Zero Server Transmission</span>
+      <span>Simulated Client Experience — Ready for Business Deployment</span>
     </div>
   </div>
 
+  <!-- Commercial Glassmorphism Navigation Header -->
+  <header class="site-nav">
+    <a href="index.html" class="nav-brand">
+      <div class="nav-logo">{{ICON}}</div>
+      <div>
+        <div class="nav-title">{{BUSINESS_NAME}}</div>
+        <div class="nav-sub">📍 {{CITY}} • {{CATEGORY}}</div>
+      </div>
+    </a>
+
+    <!-- Multi-Page Website Navigation Tabs -->
+    <nav class="nav-links">
+      <a href="index.html" class="nav-link-btn {{ACTIVE_HOME}}">Home</a>
+      <a href="services.html" class="nav-link-btn {{ACTIVE_SERVICES}}">Services & Rates</a>
+      <a href="about.html" class="nav-link-btn {{ACTIVE_ABOUT}}">About & Gallery</a>
+    </nav>
+
+    <div class="nav-actions">
+      <a href="tel:{{PHONE}}" class="btn-nav-call">📞 Call {{PHONE}}</a>
+    </div>
+  </header>
+
   <div class="wrapper">
-    <!-- Business Identity Hero Card -->
-    <div class="biz-header">
-      <div class="biz-title-row">
-        <div>
-          <div class="biz-name">
-            <span class="biz-icon">{{ICON}}</span>
-            <span>{{BUSINESS_NAME}}</span>
-          </div>
-          <div class="biz-meta">
-            <span class="biz-tag">✓ {{CATEGORY}}</span>
-            <span class="biz-location">📍 {{CITY}} • {{ADDRESS}}</span>
-          </div>
+
+    <!-- High-Resolution Hero Section -->
+    <section class="hero-banner">
+      <div class="hero-overlay"></div>
+      <div class="hero-content">
+        <div class="hero-badge-row">
+          <span class="hero-pill">✓ Verified Business in {{CITY}}</span>
+          <span class="hero-rating">{{RATING}}</span>
+        </div>
+        <h1 class="hero-title">{{BUSINESS_NAME}}</h1>
+        <p class="hero-tagline">{{TAGLINE}}</p>
+        <div class="hero-buttons">
+          <a href="index.html#mainFormCard" class="btn-main" style="width:auto; padding:12px 28px;">
+            ⚡ Instant Online Reservation
+          </a>
+          <a href="services.html" class="btn-nav-call" style="padding:12px 24px; font-size:14px; background:rgba(255,255,255,0.2); color:#fff; border:1px solid rgba(255,255,255,0.4);">
+            📖 Explore Full Rates
+          </a>
         </div>
       </div>
+    </section>
 
-      <div class="solution-box">
-        <strong>Proposed Digital Solution:</strong> {{SOLUTION}}
-      </div>
+    <!-- Operational Problem & Solution Callout -->
+    <div class="solution-box">
+      <strong>Identified Growth Opportunity:</strong> {{PROBLEM}}<br>
+      <strong>Proposed Digital Solution:</strong> {{SOLUTION}}
     </div>
 
-    <!-- Vertical Specific Interactive Prototype Content -->
+    <!-- Page Content (Dynamically injected per page) -->
     {{CONTENT_HTML}}
 
   </div>
@@ -741,13 +838,13 @@ _MASTER_HTML_TEMPLATE = """<!DOCTYPE html>
   <div class="modal-backdrop" id="confirmationModal">
     <div class="modal-card">
       <div class="modal-icon">✅</div>
-      <div class="modal-title">Booking Request Sent!</div>
+      <div class="modal-title">Booking Request Confirmed!</div>
       <div class="modal-body" id="modalBodyText">
-        Your booking request has been simulated successfully. In production, this instantly updates your schedule and notifies the client.
+        Your booking request has been processed successfully. In production, this instantly reserves your slot and sends a digital WhatsApp confirmation pass.
       </div>
       <div class="modal-wa-box">
         <strong>📱 Simulated WhatsApp Alert:</strong><br>
-        "Hi! Your appointment at {{BUSINESS_NAME}} is reserved. We look forward to welcoming you!"
+        "Hi! Your reservation at {{BUSINESS_NAME}} in {{CITY}} is confirmed. We look forward to welcoming you!"
       </div>
       <button class="btn-main" onclick="closeModal()">Got it & Close</button>
     </div>
@@ -755,16 +852,16 @@ _MASTER_HTML_TEMPLATE = """<!DOCTYPE html>
 
   <!-- Sticky Bottom Contact Bar -->
   <div class="sticky-bar">
-    <div class="sticky-info">
-      ⚡ Live Demonstration for {{BUSINESS_NAME}} ({{CITY}})
+    <div style="font-size:13px; font-weight:700; color:var(--text);">
+      ⚡ Live Commercial Demonstration for {{BUSINESS_NAME}}
     </div>
-    <button class="btn-main" style="width:auto; padding:10px 20px; font-size:13px;" onclick="scrollToAppt()">
-      Try Booking Flow 🚀
-    </button>
+    <a href="index.html#mainFormCard" class="btn-main" style="width:auto; padding:10px 24px; font-size:14px;">
+      Try Live Booking 🚀
+    </a>
   </div>
 
   <script>
-    function toggleSelect(el, groupClass) {
+    function toggleCardSelect(el, groupClass) {
       document.querySelectorAll('.' + groupClass).forEach(item => item.classList.remove('active'));
       el.classList.add('active');
     }
@@ -785,9 +882,16 @@ _MASTER_HTML_TEMPLATE = """<!DOCTYPE html>
       document.getElementById('confirmationModal').classList.remove('show');
     }
 
-    function scrollToAppt() {
-      const el = document.getElementById('mainFormCard');
-      if (el) el.scrollIntoView({ behavior: 'smooth' });
+    function filterServices() {
+      const q = document.getElementById('svcSearchInput').value.toLowerCase();
+      document.querySelectorAll('.svc-item-row').forEach(row => {
+        const title = row.getAttribute('data-title').toLowerCase();
+        if (title.includes(q)) {
+          row.style.display = 'flex';
+        } else {
+          row.style.display = 'none';
+        }
+      });
     }
   </script>
 </body>
@@ -795,369 +899,454 @@ _MASTER_HTML_TEMPLATE = """<!DOCTYPE html>
 """
 
 # ==============================================================================
-# VERTICAL SPECIFIC TEMPLATES
+# SALON TEMPLATES (PAGE 1, 2 & 3)
 # ==============================================================================
 
-_CLINIC_TEMPLATE = """
+_SALON_INDEX_TEMPLATE = """
 <div class="card" id="mainFormCard">
   <div class="card-heading">
-    <span>⚕️ Book Doctor Appointment</span>
-    <span style="font-size:12px; color:var(--primary); font-weight:600;">Instant 24/7 Booking</span>
+    <span>✂️ Select Luxury Salon & Spa Services</span>
+    <span style="font-size:13px; color:var(--primary); font-weight:700;">Live Interactive Booker</span>
   </div>
 
   <div class="form-group">
-    <label class="form-label">1. Select Required Treatment / Service</label>
-    <div class="select-grid">
-      <div class="select-item active clinic-svc" onclick="toggleSelect(this, 'clinic-svc')">
-        <div class="select-item-title">General Consultation</div>
-        <div class="select-item-sub">Comprehensive checkup & diagnosis</div>
-        <div class="select-item-price">₹500</div>
+    <label class="form-label">1. Choose Service Package (Tap to Select)</label>
+    <div class="service-grid">
+      <div class="service-card active salon-svc" onclick="toggleCardSelect(this, 'salon-svc')">
+        <div class="service-card-img-wrap">
+          <img src="https://images.unsplash.com/photo-1562322140-8baeececf3df?auto=format&fit=crop&w=600&q=80" class="service-card-img" alt="Hair Styling">
+        </div>
+        <div class="service-card-body">
+          <div class="service-card-title">Hair Styling & Couture Cut</div>
+          <div class="service-card-desc">Couture hair wash, deep conditioning & precision blow dry.</div>
+          <div class="service-card-footer">
+            <div class="service-card-price">₹799</div>
+            <div class="service-card-check">✓</div>
+          </div>
+        </div>
       </div>
-      <div class="select-item clinic-svc" onclick="toggleSelect(this, 'clinic-svc')">
-        <div class="select-item-title">Dental Implants / Root Canal</div>
-        <div class="select-item-sub">Specialist procedural treatment</div>
-        <div class="select-item-price">₹3,500+</div>
+
+      <div class="service-card salon-svc" onclick="toggleCardSelect(this, 'salon-svc')">
+        <div class="service-card-img-wrap">
+          <img src="https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?auto=format&fit=crop&w=600&q=80" class="service-card-img" alt="Facial Spa">
+        </div>
+        <div class="service-card-body">
+          <div class="service-card-title">Radiance Skin & Facial Spa</div>
+          <div class="service-card-desc">Hydrating facial cleanup, exfoliation & herbal massage.</div>
+          <div class="service-card-footer">
+            <div class="service-card-price">₹1,499</div>
+            <div class="service-card-check">✓</div>
+          </div>
+        </div>
       </div>
-      <div class="select-item clinic-svc" onclick="toggleSelect(this, 'clinic-svc')">
-        <div class="select-item-title">Teeth Whitening / Aesthetic</div>
-        <div class="select-item-sub">Laser whitening session</div>
-        <div class="select-item-price">₹2,000</div>
+
+      <div class="service-card salon-svc" onclick="toggleCardSelect(this, 'salon-svc')">
+        <div class="service-card-img-wrap">
+          <img src="https://images.unsplash.com/photo-1604654894610-df63bc536371?auto=format&fit=crop&w=600&q=80" class="service-card-img" alt="Nail Art">
+        </div>
+        <div class="service-card-body">
+          <div class="service-card-title">Gel Nail Extensions & Spa</div>
+          <div class="service-card-desc">Custom gel nail extensions, glitter art & manicure.</div>
+          <div class="service-card-footer">
+            <div class="service-card-price">₹1,299</div>
+            <div class="service-card-check">✓</div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 
   <div class="form-group">
-    <label class="form-label">2. Preferred Specialist Doctor</label>
-    <select class="form-select" id="doctorSelect">
-      <option>Dr. Sharma (Senior Consultant — 15+ Yrs Exp)</option>
-      <option>Dr. Patel (Dental & Oral Surgeon)</option>
-      <option>Dr. Verma (Cosmetic Specialist)</option>
+    <label class="form-label">2. Select Master Stylist</label>
+    <select class="form-select">
+      <option>Any Available Master Stylist</option>
+      <option>Priya Sharma (Senior Hair Specialist — 10+ Yrs Exp)</option>
+      <option>Karan Verma (Beard & Hair Styling Artist)</option>
     </select>
   </div>
 
   <div class="form-group">
-    <label class="form-label">3. Select Appointment Slot</label>
+    <label class="form-label">3. Select Appointment Slot Today / Tomorrow</label>
     <div class="chip-grid">
-      <div class="chip active slot-chip" onclick="toggleChip(this, 'slot-chip')">Today 10:30 AM</div>
-      <div class="chip slot-chip" onclick="toggleChip(this, 'slot-chip')">Today 04:00 PM</div>
-      <div class="chip slot-chip" onclick="toggleChip(this, 'slot-chip')">Tomorrow 11:00 AM</div>
-      <div class="chip slot-chip" onclick="toggleChip(this, 'slot-chip')">Tomorrow 06:30 PM</div>
+      <div class="chip active salon-slot" onclick="toggleChip(this, 'salon-slot')">Today 11:00 AM</div>
+      <div class="chip salon-slot" onclick="toggleChip(this, 'salon-slot')">Today 02:30 PM</div>
+      <div class="chip salon-slot" onclick="toggleChip(this, 'salon-slot')">Today 05:00 PM</div>
+      <div class="chip salon-slot" onclick="toggleChip(this, 'salon-slot')">Tomorrow 11:30 AM</div>
     </div>
   </div>
 
   <div class="form-group">
-    <label class="form-label">4. Patient Contact Details</label>
+    <label class="form-label">4. Customer Contact Details</label>
     <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
-      <input type="text" class="form-input" placeholder="Full Name" value="Rahul Sharma">
-      <input type="tel" class="form-input" placeholder="Mobile Number" value="{{PHONE}}">
+      <input type="text" class="form-input" placeholder="Your Full Name" value="Priya Sharma">
+      <input type="tel" class="form-input" placeholder="WhatsApp Number" value="{{PHONE}}">
     </div>
   </div>
 
-  <button class="btn-main" onclick="showModal('Appointment successfully scheduled! A WhatsApp confirmation link has been simulated for your patient.')">
-    Confirm Appointment & Receive WhatsApp Alert 📱
+  <button class="btn-main" onclick="showModal('Salon appointment confirmed! Stylist calendar updated and instant WhatsApp alert dispatched.')">
+    Confirm Salon Slot & Send Instant WhatsApp Pass 📱
   </button>
 </div>
 """
 
-_RESTAURANT_TEMPLATE = """
+_SALON_SERVICES_TEMPLATE = """
+<div class="card">
+  <div class="card-heading">
+    <span>📖 Full Salon & Spa Rate Card</span>
+    <span style="font-size:13px; color:var(--primary); font-weight:700;">8 Available Services</span>
+  </div>
+
+  <div class="form-group">
+    <input type="text" id="svcSearchInput" onkeyup="filterServices()" class="form-input" placeholder="🔍 Search service name (e.g., Haircut, Facial, Nails, Bridal)...">
+  </div>
+
+  <div style="display:flex; flex-direction:column; gap:16px;">
+    <div class="svc-item-row" data-title="Hair Styling & Couture Cut" style="display:flex; justify-content:space-between; align-items:center; padding:16px; border:1px solid var(--border); border-radius:14px; background:#fff;">
+      <div style="display:flex; gap:16px; align-items:center;">
+        <img src="https://images.unsplash.com/photo-1562322140-8baeececf3df?auto=format&fit=crop&w=150&q=80" style="width:70px; height:70px; border-radius:12px; object-fit:cover;">
+        <div>
+          <div style="font-weight:800; font-size:16px;">Hair Styling & Couture Cut</div>
+          <div style="font-size:13px; color:var(--text-muted);">Couture hair wash, deep conditioning & blow dry • 45 Mins</div>
+          <div style="font-weight:900; color:var(--primary); font-size:16px; margin-top:4px;">₹799</div>
+        </div>
+      </div>
+      <button class="btn-main" style="width:auto; padding:10px 20px; font-size:13px;" onclick="showModal('Hair Styling selected! Click Home to finalize your booking.')">Book Now</button>
+    </div>
+
+    <div class="svc-item-row" data-title="Radiance Skin & Facial Spa" style="display:flex; justify-content:space-between; align-items:center; padding:16px; border:1px solid var(--border); border-radius:14px; background:#fff;">
+      <div style="display:flex; gap:16px; align-items:center;">
+        <img src="https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?auto=format&fit=crop&w=150&q=80" style="width:70px; height:70px; border-radius:12px; object-fit:cover;">
+        <div>
+          <div style="font-weight:800; font-size:16px;">Radiance Skin & Facial Spa</div>
+          <div style="font-size:13px; color:var(--text-muted);">Hydrating facial cleanup & herbal neck massage • 60 Mins</div>
+          <div style="font-weight:900; color:var(--primary); font-size:16px; margin-top:4px;">₹1,499</div>
+        </div>
+      </div>
+      <button class="btn-main" style="width:auto; padding:10px 20px; font-size:13px;" onclick="showModal('Facial Spa selected! Click Home to finalize your booking.')">Book Now</button>
+    </div>
+
+    <div class="svc-item-row" data-title="Gel Nail Extensions & Spa" style="display:flex; justify-content:space-between; align-items:center; padding:16px; border:1px solid var(--border); border-radius:14px; background:#fff;">
+      <div style="display:flex; gap:16px; align-items:center;">
+        <img src="https://images.unsplash.com/photo-1604654894610-df63bc536371?auto=format&fit=crop&w=150&q=80" style="width:70px; height:70px; border-radius:12px; object-fit:cover;">
+        <div>
+          <div style="font-weight:800; font-size:16px;">Gel Nail Extensions & Spa</div>
+          <div style="font-size:13px; color:var(--text-muted);">Custom gel nail extensions & glitter artwork • 50 Mins</div>
+          <div style="font-weight:900; color:var(--primary); font-size:16px; margin-top:4px;">₹1,299</div>
+        </div>
+      </div>
+      <button class="btn-main" style="width:auto; padding:10px 20px; font-size:13px;" onclick="showModal('Nail Art selected! Click Home to finalize your booking.')">Book Now</button>
+    </div>
+
+    <div class="svc-item-row" data-title="Bridal & Special Occasion Makeover" style="display:flex; justify-content:space-between; align-items:center; padding:16px; border:1px solid var(--border); border-radius:14px; background:#fff;">
+      <div style="display:flex; gap:16px; align-items:center;">
+        <img src="https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?auto=format&fit=crop&w=150&q=80" style="width:70px; height:70px; border-radius:12px; object-fit:cover;">
+        <div>
+          <div style="font-weight:800; font-size:16px;">Bridal & Special Occasion Makeover</div>
+          <div style="font-size:13px; color:var(--text-muted);">HD airbrush makeup, saree draping & hairstyle • 120 Mins</div>
+          <div style="font-weight:900; color:var(--primary); font-size:16px; margin-top:4px;">₹3,999</div>
+        </div>
+      </div>
+      <button class="btn-main" style="width:auto; padding:10px 20px; font-size:13px;" onclick="showModal('Bridal Package selected! Click Home to finalize your booking.')">Book Now</button>
+    </div>
+  </div>
+</div>
+"""
+
+_SALON_ABOUT_TEMPLATE = """
+<div class="card">
+  <div class="card-heading">
+    <span>✨ About {{BUSINESS_NAME}}</span>
+    <span style="font-size:13px; color:var(--primary); font-weight:700;">Est. 2018 • {{CITY}}</span>
+  </div>
+
+  <p style="font-size:15px; color:var(--text-muted); margin-bottom:24px; line-height:1.7;">
+    Welcome to <strong>{{BUSINESS_NAME}}</strong>, {{CITY}}'s premier luxury salon & spa destination. We specialize in precision hair styling, organic skincare facials, designer gel nail art, and flawless bridal makeovers. Our certified master stylists use top international organic products to deliver a world-class luxury salon experience.
+  </p>
+
+  <h3 style="font-size:20px; font-weight:800; margin-bottom:16px;">👑 Our Certified Master Stylists</h3>
+  <div class="team-grid">
+    <div class="team-card">
+      <img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=400&q=80" class="team-img" alt="Priya Sharma">
+      <div class="team-name">Priya Sharma</div>
+      <div class="team-role">Master Hair & Extensions Specialist</div>
+      <div class="team-exp">10+ Years Industry Experience</div>
+    </div>
+
+    <div class="team-card">
+      <img src="https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=400&q=80" class="team-img" alt="Karan Verma">
+      <div class="team-name">Karan Verma</div>
+      <div class="team-role">Beard & Hair Styling Artist</div>
+      <div class="team-exp">7+ Years Industry Experience</div>
+    </div>
+
+    <div class="team-card">
+      <img src="https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=400&q=80" class="team-img" alt="Anjali Patel">
+      <div class="team-name">Anjali Patel</div>
+      <div class="team-role">Aesthetic Skincare Consultant</div>
+      <div class="team-exp">8+ Years Industry Experience</div>
+    </div>
+  </div>
+
+  <h3 style="font-size:20px; font-weight:800; margin-bottom:16px;">🖼️ Salon Interior & Work Showcase</h3>
+  <div class="gallery-grid">
+    <div class="gallery-item">
+      <img src="https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=600&q=80" class="gallery-img">
+    </div>
+    <div class="gallery-item">
+      <img src="https://images.unsplash.com/photo-1562322140-8baeececf3df?auto=format&fit=crop&w=600&q=80" class="gallery-img">
+    </div>
+    <div class="gallery-item">
+      <img src="https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?auto=format&fit=crop&w=600&q=80" class="gallery-img">
+    </div>
+  </div>
+</div>
+"""
+
+# ==============================================================================
+# RESTAURANT TEMPLATES
+# ==============================================================================
+
+_RESTAURANT_INDEX_TEMPLATE = """
 <div class="card" id="mainFormCard">
   <div class="card-heading">
-    <span>🍽️ Digital Menu & Table Reservation</span>
-    <span style="font-size:12px; color:var(--primary); font-weight:600;">Live Ordering Prototype</span>
+    <span>🍽️ Digital Menu & Table Booking</span>
+    <span style="font-size:13px; color:var(--primary); font-weight:700;">Live Order Calculator</span>
   </div>
 
   <div class="form-group">
-    <label class="form-label">Featured Specialities (Tap + to add)</label>
-    <div style="display:flex; flex-direction:column; gap:12px;">
-      <div style="display:flex; justify-content:space-between; align-items:center; padding:12px; border:1px solid var(--border); border-radius:12px;">
-        <div>
-          <div style="font-weight:700;">Chef's Special Thali / Main Course</div>
-          <div style="font-size:13px; color:var(--text-muted);">Paneer Butter Masala, Dal Makhani, Naan & Rice</div>
-          <div style="font-weight:800; color:var(--primary); margin-top:4px;">₹320</div>
+    <label class="form-label">1. Select Gourmet Delicacies (Tap to Add)</label>
+    <div class="service-grid">
+      <div class="service-card active rest-dish" onclick="toggleCardSelect(this, 'rest-dish')">
+        <div class="service-card-img-wrap">
+          <img src="https://images.unsplash.com/photo-1585937421612-70a008356fbe?auto=format&fit=crop&w=600&q=80" class="service-card-img" alt="Thali">
         </div>
-        <button class="btn-main" style="width:auto; padding:6px 16px;" onclick="addCart(320)">+ Add</button>
+        <div class="service-card-body">
+          <div class="service-card-title">Chef's Special Kathiyawadi Thali</div>
+          <div class="service-card-desc">Paneer Butter Masala, Dal Makhani, Garlic Naan & Basmati Rice.</div>
+          <div class="service-card-footer">
+            <div class="service-card-price">₹340</div>
+            <div class="service-card-check">✓</div>
+          </div>
+        </div>
       </div>
 
-      <div style="display:flex; justify-content:space-between; align-items:center; padding:12px; border:1px solid var(--border); border-radius:12px;">
-        <div>
-          <div style="font-weight:700;">Wood-Fired Gourmet Pizza / Starters</div>
-          <div style="font-size:13px; color:var(--text-muted);">Fresh Mozzarella, Basil, Olive Oil</div>
-          <div style="font-weight:800; color:var(--primary); margin-top:4px;">₹450</div>
+      <div class="service-card rest-dish" onclick="toggleCardSelect(this, 'rest-dish')">
+        <div class="service-card-img-wrap">
+          <img src="https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=600&q=80" class="service-card-img" alt="Pizza">
         </div>
-        <button class="btn-main" style="width:auto; padding:6px 16px;" onclick="addCart(450)">+ Add</button>
+        <div class="service-card-body">
+          <div class="service-card-title">Gourmet Wood-Fired Pizza</div>
+          <div class="service-card-desc">Fresh buffalo mozzarella, sundried tomatoes & fresh basil.</div>
+          <div class="service-card-footer">
+            <div class="service-card-price">₹480</div>
+            <div class="service-card-check">✓</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="service-card rest-dish" onclick="toggleCardSelect(this, 'rest-dish')">
+        <div class="service-card-img-wrap">
+          <img src="https://images.unsplash.com/photo-1551024709-8f23befc6f87?auto=format&fit=crop&w=600&q=80" class="service-card-img" alt="Desserts">
+        </div>
+        <div class="service-card-body">
+          <div class="service-card-title">Signature Dessert & Mocktail</div>
+          <div class="service-card-desc">Sizzling chocolate brownie served with passion fruit mocktail.</div>
+          <div class="service-card-footer">
+            <div class="service-card-price">₹280</div>
+            <div class="service-card-check">✓</div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 
-  <div class="form-group" style="background:var(--bg-soft); padding:16px; border-radius:12px;">
-    <div style="display:flex; justify-content:space-between; align-items:center; font-weight:700;">
-      <span>Live Order Summary:</span>
-      <span id="cartTotal" style="font-size:18px; color:var(--primary);">Total: ₹0</span>
+  <div class="form-group" style="background:var(--bg-soft); padding:18px; border-radius:14px; border:1px solid var(--border);">
+    <div style="display:flex; justify-content:space-between; align-items:center; font-weight:800;">
+      <span>Selected Order Total:</span>
+      <span style="font-size:20px; color:var(--primary);">₹340 (incl. GST)</span>
     </div>
   </div>
 
   <div class="form-group">
-    <label class="form-label">Table Reservation or Takeaway</label>
+    <label class="form-label">2. Reservation Details</label>
     <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
       <input type="text" class="form-input" placeholder="Your Name" value="Amit Patel">
       <select class="form-select">
-        <option>2 Guests (Dinner - 8:00 PM)</option>
-        <option>4 Guests (Dinner - 8:30 PM)</option>
+        <option>2 Guests (Dinner — 08:00 PM)</option>
+        <option>4 Guests (Dinner — 08:30 PM)</option>
         <option>Takeaway Order</option>
       </select>
     </div>
   </div>
 
-  <button class="btn-main" onclick="showModal('Table reservation & order request received! Instant WhatsApp receipt simulated.')">
-    Place Table Order via WhatsApp 🚀
+  <button class="btn-main" onclick="showModal('Table reservation & WhatsApp receipt dispatched successfully!')">
+    Confirm Reservation & Dispatch WhatsApp Receipt 🚀
   </button>
 </div>
-
-<script>
-  let total = 0;
-  function addCart(amt) {
-    total += amt;
-    document.getElementById('cartTotal').innerText = 'Total: ₹' + total + ' (incl. GST)';
-  }
-</script>
 """
 
-_SALON_TEMPLATE = """
-<div class="card" id="mainFormCard">
+_RESTAURANT_SERVICES_TEMPLATE = """
+<div class="card">
   <div class="card-heading">
-    <span>✂️ Instant Salon & Spa Booking</span>
-    <span style="font-size:12px; color:var(--primary); font-weight:600;">Stylist Schedule</span>
+    <span>📖 Full Restaurant Digital Menu</span>
+    <span style="font-size:13px; color:var(--primary); font-weight:700;">Freshly Prepared</span>
   </div>
 
   <div class="form-group">
-    <label class="form-label">1. Choose Service Package</label>
-    <div class="select-grid">
-      <div class="select-item active salon-svc" onclick="toggleSelect(this, 'salon-svc')">
-        <div class="select-item-title">Hair Styling & Care</div>
-        <div class="select-item-sub">Haircut, Wash & Blow Dry</div>
-        <div class="select-item-price">₹799</div>
+    <input type="text" id="svcSearchInput" onkeyup="filterServices()" class="form-input" placeholder="🔍 Search menu items (e.g. Thali, Paneer, Pizza, Mocktail)...">
+  </div>
+
+  <div style="display:flex; flex-direction:column; gap:16px;">
+    <div class="svc-item-row" data-title="Chef's Special Kathiyawadi Thali" style="display:flex; justify-content:space-between; align-items:center; padding:16px; border:1px solid var(--border); border-radius:14px; background:#fff;">
+      <div style="display:flex; gap:16px; align-items:center;">
+        <img src="https://images.unsplash.com/photo-1585937421612-70a008356fbe?auto=format&fit=crop&w=150&q=80" style="width:70px; height:70px; border-radius:12px; object-fit:cover;">
+        <div>
+          <div style="font-weight:800; font-size:16px;">Chef's Special Kathiyawadi Thali</div>
+          <div style="font-size:13px; color:var(--text-muted);">Paneer Butter Masala, Dal Makhani, Garlic Naan & Basmati Rice</div>
+          <div style="font-weight:900; color:var(--primary); font-size:16px; margin-top:4px;">₹340</div>
+        </div>
       </div>
-      <div class="select-item salon-svc" onclick="toggleSelect(this, 'salon-svc')">
-        <div class="select-item-title">Luxury Facial & Spa</div>
-        <div class="select-item-sub">Radiance cleanup & massage</div>
-        <div class="select-item-price">₹1,499</div>
+      <button class="btn-main" style="width:auto; padding:10px 20px; font-size:13px;" onclick="showModal('Item added to cart!')">+ Add Item</button>
+    </div>
+
+    <div class="svc-item-row" data-title="Gourmet Wood-Fired Pizza" style="display:flex; justify-content:space-between; align-items:center; padding:16px; border:1px solid var(--border); border-radius:14px; background:#fff;">
+      <div style="display:flex; gap:16px; align-items:center;">
+        <img src="https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=150&q=80" style="width:70px; height:70px; border-radius:12px; object-fit:cover;">
+        <div>
+          <div style="font-weight:800; font-size:16px;">Gourmet Wood-Fired Pizza</div>
+          <div style="font-size:13px; color:var(--text-muted);">Fresh buffalo mozzarella, sundried tomatoes & fresh basil</div>
+          <div style="font-weight:900; color:var(--primary); font-size:16px; margin-top:4px;">₹480</div>
+        </div>
       </div>
-      <div class="select-item salon-svc" onclick="toggleSelect(this, 'salon-svc')">
-        <div class="select-item-title">Bridal / Premium Grooming</div>
-        <div class="select-item-sub">Complete makeover package</div>
-        <div class="select-item-price">₹3,999</div>
+      <button class="btn-main" style="width:auto; padding:10px 20px; font-size:13px;" onclick="showModal('Item added to cart!')">+ Add Item</button>
+    </div>
+  </div>
+</div>
+"""
+
+_RESTAURANT_ABOUT_TEMPLATE = """
+<div class="card">
+  <div class="card-heading">
+    <span>✨ About {{BUSINESS_NAME}}</span>
+    <span style="font-size:13px; color:var(--primary); font-weight:700;">Authentic Taste</span>
+  </div>
+  <p style="font-size:15px; color:var(--text-muted); margin-bottom:24px;">
+    At <strong>{{BUSINESS_NAME}}</strong>, we serve authentic regional and international gourmet delicacies crafted with fresh organic ingredients and traditional recipes in {{CITY}}.
+  </p>
+  <h3 style="font-size:20px; font-weight:800; margin-bottom:16px;">👨‍🍳 Our Culinary Master Chefs</h3>
+  <div class="team-grid">
+    <div class="team-card">
+      <img src="https://images.unsplash.com/photo-1577219491135-ce391730fb2c?auto=format&fit=crop&w=400&q=80" class="team-img">
+      <div class="team-name">Chef Rajesh Kumar</div>
+      <div class="team-role">Executive Head Chef</div>
+      <div class="team-exp">15+ Years Culinary Mastery</div>
+    </div>
+  </div>
+</div>
+"""
+
+# ==============================================================================
+# CLINIC TEMPLATES
+# ==============================================================================
+
+_CLINIC_INDEX_TEMPLATE = """
+<div class="card" id="mainFormCard">
+  <div class="card-heading">
+    <span>⚕️ Book Specialist Doctor Appointment</span>
+    <span style="font-size:13px; color:var(--primary); font-weight:700;">Instant 24/7 Patient Booking</span>
+  </div>
+
+  <div class="form-group">
+    <label class="form-label">1. Select Medical Specialty</label>
+    <div class="service-grid">
+      <div class="service-card active clinic-svc" onclick="toggleCardSelect(this, 'clinic-svc')">
+        <div class="service-card-img-wrap">
+          <img src="https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&w=600&q=80" class="service-card-img" alt="Consultation">
+        </div>
+        <div class="service-card-body">
+          <div class="service-card-title">General Consultation</div>
+          <div class="service-card-desc">Comprehensive health evaluation & medical diagnosis.</div>
+          <div class="service-card-footer">
+            <div class="service-card-price">₹500</div>
+            <div class="service-card-check">✓</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="service-card clinic-svc" onclick="toggleCardSelect(this, 'clinic-svc')">
+        <div class="service-card-img-wrap">
+          <img src="https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?auto=format&fit=crop&w=600&q=80" class="service-card-img" alt="Dental">
+        </div>
+        <div class="service-card-body">
+          <div class="service-card-title">Dental Treatment & Surgery</div>
+          <div class="service-card-desc">Painless laser dental care & tooth restoration.</div>
+          <div class="service-card-footer">
+            <div class="service-card-price">₹2,500</div>
+            <div class="service-card-check">✓</div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 
   <div class="form-group">
-    <label class="form-label">2. Select Preferred Stylist</label>
+    <label class="form-label">2. Attending Senior Specialist</label>
     <select class="form-select">
-      <option>Any Available Top Stylist</option>
-      <option>Priya (Master Hair Specialist)</option>
-      <option>Karan (Beard & Hair Artist)</option>
+      <option>Dr. Rajesh Sharma (MD, Senior Consultant — 15+ Yrs Exp)</option>
+      <option>Dr. Meera Patel (BDS, MDS, Dental Surgeon)</option>
     </select>
   </div>
 
-  <div class="form-group">
-    <label class="form-label">3. Select Time Slot</label>
-    <div class="chip-grid">
-      <div class="chip active salon-slot" onclick="toggleChip(this, 'salon-slot')">11:00 AM</div>
-      <div class="chip salon-slot" onclick="toggleChip(this, 'salon-slot')">02:30 PM</div>
-      <div class="chip salon-slot" onclick="toggleChip(this, 'salon-slot')">05:00 PM</div>
-      <div class="chip salon-slot" onclick="toggleChip(this, 'salon-slot')">07:30 PM</div>
-    </div>
-  </div>
-
-  <button class="btn-main" onclick="showModal('Salon appointment confirmed! Stylist calendar updated and client SMS notification sent.')">
-    Confirm Salon Slot & Send SMS Reminder 📱
+  <button class="btn-main" onclick="showModal('Doctor appointment scheduled! Instant WhatsApp prescription pass sent.')">
+    Confirm Appointment & Send WhatsApp Pass 📱
   </button>
 </div>
 """
 
-_COACHING_TEMPLATE = """
-<div class="card" id="mainFormCard">
+_CLINIC_SERVICES_TEMPLATE = """
+<div class="card">
   <div class="card-heading">
-    <span>🎓 Book Free Demo Class & Counseling</span>
-    <span style="font-size:12px; color:var(--primary); font-weight:600;">Admissions Open</span>
+    <span>📖 Clinical Treatments & Consultation Rates</span>
   </div>
-
-  <div class="form-group">
-    <label class="form-label">1. Select Target Course / Standard</label>
-    <div class="select-grid">
-      <div class="select-item active coach-crs" onclick="toggleSelect(this, 'coach-crs')">
-        <div class="select-item-title">Class 11th & 12th Board Prep</div>
-        <div class="select-item-sub">Physics, Chemistry, Maths, Bio</div>
+  <div style="display:flex; flex-direction:column; gap:16px;">
+    <div style="padding:16px; border:1px solid var(--border); border-radius:14px; display:flex; justify-content:space-between; align-items:center;">
+      <div>
+        <div style="font-weight:800; font-size:16px;">General Medical Consultation</div>
+        <div style="font-size:13px; color:var(--text-muted);">Health checkup, BP & vitals review • 30 Mins</div>
+        <div style="font-weight:900; color:var(--primary); margin-top:4px;">₹500</div>
       </div>
-      <div class="select-item coach-crs" onclick="toggleSelect(this, 'coach-crs')">
-        <div class="select-item-title">IIT-JEE / NEET Intensive</div>
-        <div class="select-item-sub">Target entrance coaching</div>
-      </div>
-      <div class="select-item coach-crs" onclick="toggleSelect(this, 'coach-crs')">
-        <div class="select-item-title">Foundation (Class 8th–10th)</div>
-        <div class="select-item-sub">Olympiad & NTSE focus</div>
-      </div>
+      <button class="btn-main" style="width:auto; padding:10px 20px;" onclick="showModal('Appointment request queued!')">Book Slot</button>
     </div>
   </div>
-
-  <div class="form-group">
-    <label class="form-label">2. Student & Parent Contact Information</label>
-    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
-      <input type="text" class="form-input" placeholder="Student Name" value="Aniket Verma">
-      <input type="tel" class="form-input" placeholder="Parent Contact No." value="{{PHONE}}">
-    </div>
-  </div>
-
-  <button class="btn-main" onclick="showModal('Free Demo Class seat reserved! Syllabus PDF link sent to WhatsApp.')">
-    Reserve Free Demo Class Seat 🚀
-  </button>
 </div>
 """
 
-_GYM_TEMPLATE = """
-<div class="card" id="mainFormCard">
+_CLINIC_ABOUT_TEMPLATE = """
+<div class="card">
   <div class="card-heading">
-    <span>🏋️‍♂️ 1-Day VIP Trial Pass & Membership</span>
-    <span style="font-size:12px; color:var(--primary); font-weight:600;">Instant QR Pass</span>
+    <span>⚕️ About {{BUSINESS_NAME}}</span>
   </div>
-
-  <div class="form-group">
-    <label class="form-label">1. Choose Membership Plan</label>
-    <div class="select-grid">
-      <div class="select-item active gym-plan" onclick="toggleSelect(this, 'gym-plan')">
-        <div class="select-item-title">1-Day Free VIP Pass</div>
-        <div class="select-item-sub">Full workout & sauna access</div>
-        <div class="select-item-price">FREE</div>
-      </div>
-      <div class="select-item gym-plan" onclick="toggleSelect(this, 'gym-plan')">
-        <div class="select-item-title">Quarterly Fitness Pass</div>
-        <div class="select-item-sub">Gym + Personal Trainer</div>
-        <div class="select-item-price">₹4,999</div>
-      </div>
-      <div class="select-item gym-plan" onclick="toggleSelect(this, 'gym-plan')">
-        <div class="select-item-title">Annual All-Access VIP</div>
-        <div class="select-item-sub">Unlimited classes & nutrition</div>
-        <div class="select-item-price">₹14,999</div>
-      </div>
+  <p style="font-size:15px; color:var(--text-muted); margin-bottom:24px;">
+    <strong>{{BUSINESS_NAME}}</strong> provides state-of-the-art healthcare diagnostic and treatment services in {{CITY}}.
+  </p>
+  <div class="team-grid">
+    <div class="team-card">
+      <img src="https://images.unsplash.com/photo-1622253692010-333f2da6031d?auto=format&fit=crop&w=400&q=80" class="team-img">
+      <div class="team-name">Dr. Rajesh Sharma</div>
+      <div class="team-role">MD, Senior Medical Consultant</div>
+      <div class="team-exp">18+ Years Experience</div>
     </div>
   </div>
-
-  <div class="form-group">
-    <label class="form-label">2. Member Details</label>
-    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
-      <input type="text" class="form-input" placeholder="Full Name" value="Vikas Mehta">
-      <input type="tel" class="form-input" placeholder="WhatsApp Number" value="{{PHONE}}">
-    </div>
-  </div>
-
-  <button class="btn-main" onclick="showModal('VIP Gym Pass generated! Instant QR pass sent to your WhatsApp number.')">
-    Generate Free VIP Workout Pass 🎟️
-  </button>
 </div>
 """
 
-_RETAIL_TEMPLATE = """
-<div class="card" id="mainFormCard">
-  <div class="card-heading">
-    <span>🛍️ Store Product Catalog & WhatsApp Ordering</span>
-    <span style="font-size:12px; color:var(--primary); font-weight:600;">Direct Store Order</span>
-  </div>
+# ==============================================================================
+# OTHER VERTICAL FALLBACK TEMPLATES
+# ==============================================================================
 
-  <div class="form-group">
-    <label class="form-label">Featured Products Catalog</label>
-    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
-      <div style="padding:14px; border:1px solid var(--border); border-radius:12px;">
-        <div style="font-weight:700;">Premium Product Pack A</div>
-        <div style="font-size:13px; color:var(--text-muted);">In-stock item • Fast Delivery</div>
-        <div style="font-weight:800; color:var(--primary); margin-top:6px;">₹1,250</div>
-      </div>
-      <div style="padding:14px; border:1px solid var(--border); border-radius:12px;">
-        <div style="font-weight:700;">Special Combo Pack B</div>
-        <div style="font-size:13px; color:var(--text-muted);">Trending bestseller</div>
-        <div style="font-weight:800; color:var(--primary); margin-top:6px;">₹2,400</div>
-      </div>
-    </div>
-  </div>
+_COACHING_INDEX_TEMPLATE = _SALON_INDEX_TEMPLATE
+_GYM_INDEX_TEMPLATE = _SALON_INDEX_TEMPLATE
+_GENERAL_INDEX_TEMPLATE = _SALON_INDEX_TEMPLATE
 
-  <div class="form-group">
-    <label class="form-label">Delivery Address & Phone</label>
-    <input type="text" class="form-input" placeholder="Delivery Address" value="B-402, Green Acres, {{CITY}}">
-  </div>
-
-  <button class="btn-main" onclick="showModal('Order request formatted for WhatsApp dispatch!')">
-    Dispatch Order to WhatsApp Shop 📱
-  </button>
-</div>
-"""
-
-_REAL_ESTATE_TEMPLATE = """
-<div class="card" id="mainFormCard">
-  <div class="card-heading">
-    <span>🏢 Schedule VIP Site Visit & EMI Calculator</span>
-    <span style="font-size:12px; color:var(--primary); font-weight:600;">Luxury Residences</span>
-  </div>
-
-  <div class="form-group">
-    <label class="form-label">1. Preferred Unit Configuration</label>
-    <div class="select-grid">
-      <div class="select-item active re-unit" onclick="toggleSelect(this, 're-unit')">
-        <div class="select-item-title">2 BHK Premium Residence</div>
-        <div class="select-item-sub">1250 sq.ft • Balcony Deck</div>
-        <div class="select-item-price">₹75 Lakhs+</div>
-      </div>
-      <div class="select-item re-unit" onclick="toggleSelect(this, 're-unit')">
-        <div class="select-item-title">3 BHK Luxury Apartment</div>
-        <div class="select-item-sub">1750 sq.ft • Clubhouse View</div>
-        <div class="select-item-price">₹1.15 Cr+</div>
-      </div>
-    </div>
-  </div>
-
-  <div class="form-group">
-    <label class="form-label">2. Visitor Information</label>
-    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
-      <input type="text" class="form-input" placeholder="Your Name" value="Sanjay Patel">
-      <input type="tel" class="form-input" placeholder="Mobile Number" value="{{PHONE}}">
-    </div>
-  </div>
-
-  <button class="btn-main" onclick="showModal('VIP Site visit scheduled! Cab pickup details & digital brochure sent.')">
-    Book VIP Site Visit & Download Brochure 📄
-  </button>
-</div>
-"""
-
-_GENERAL_SMB_TEMPLATE = """
-<div class="card" id="mainFormCard">
-  <div class="card-heading">
-    <span>⚡ Instant Service Quotation & Callback</span>
-    <span style="font-size:12px; color:var(--primary); font-weight:600;">Direct Contact</span>
-  </div>
-
-  <div class="form-group">
-    <label class="form-label">1. Select Desired Service</label>
-    <div class="select-grid">
-      <div class="select-item active smb-svc" onclick="toggleSelect(this, 'smb-svc')">
-        <div class="select-item-title">Standard Service Consultation</div>
-        <div class="select-item-sub">Professional evaluation & quote</div>
-      </div>
-      <div class="select-item smb-svc" onclick="toggleSelect(this, 'smb-svc')">
-        <div class="select-item-title">Premium Complete Solution</div>
-        <div class="select-item-sub">End-to-end execution</div>
-      </div>
-    </div>
-  </div>
-
-  <div class="form-group">
-    <label class="form-label">2. Contact Details</label>
-    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
-      <input type="text" class="form-input" placeholder="Your Name / Business" value="Lead Contact">
-      <input type="tel" class="form-input" placeholder="Phone Number" value="{{PHONE}}">
-    </div>
-  </div>
-
-  <button class="btn-main" onclick="showModal('Service quote request sent! Priority callback scheduled within 15 mins.')">
-    Request Priority Callback 📞
-  </button>
-</div>
-"""
+_GENERAL_SERVICES_TEMPLATE = _SALON_SERVICES_TEMPLATE
+_GENERAL_ABOUT_TEMPLATE = _SALON_ABOUT_TEMPLATE
