@@ -537,8 +537,8 @@ DASHBOARD_HTML = """<!DOCTYPE html>
       <div class="form-group" style="margin-bottom:16px;">
         <label class="form-label">3. Lead Discovery Source</label>
         <select id="disc-provider" class="form-select">
-          <option value="google_places">🗺️ Google Places API (100% Real Verified Google Maps Data)</option>
-          <option value="live">⚡ Live Search & OpenStreetMap (Real Public Leads)</option>
+          <option value="serpapi" selected>🌐 SerpAPI + Hunter.io (100% Real Live Production Data)</option>
+          <option value="live">⚡ Free OpenStreetMap & Web Search</option>
           <option value="sample">🧪 Sample Preset Fixtures (Testing Mode)</option>
         </select>
       </div>
@@ -1537,7 +1537,7 @@ class DashboardHandler(BaseHTTPRequestHandler):
         # 1. Run Pipeline Cycle
         if path == "/api/b2b/pipeline/run":
             limit = int(data.get("limit", 5))
-            provider_name = data.get("provider", "live")
+            provider_name = data.get("provider", "serpapi")
             city = data.get("city", "Ahmedabad")
             category = data.get("category", "clinic")
 
