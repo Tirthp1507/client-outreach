@@ -500,7 +500,9 @@ class LiveWebDiscoveryProvider(BaseDiscoveryProvider):
                         continue
 
                     seen_names.add(clean_name.lower())
-                    email = f"contact@{dom}"
+                    enriched_web, enriched_phone, enriched_email = self._enrich_lead_contact(clean_name, target_city)
+                    final_web = enriched_web or actual_url
+                    final_dom = clean_domain(final_web) or dom
                     slug_name = _slugify(clean_name)[:30]
                     slug_city = _slugify(target_city)[:20]
                     biz_id = f"biz_live_{slug_name}_{slug_city}"
@@ -513,12 +515,12 @@ class LiveWebDiscoveryProvider(BaseDiscoveryProvider):
                         state="Gujarat",
                         country="India",
                         address=f"Main Road, {target_city}",
-                        website=actual_url,
-                        domain=dom,
-                        phone=clean_phone("9876543210"),
-                        email=email,
+                        website=final_web,
+                        domain=final_dom,
+                        phone=clean_phone(enriched_phone),
+                        email=enriched_email,
                         source_provider="web_search_live",
-                        source_id=f"web:{dom}",
+                        source_id=f"web:{final_dom}",
                         status=BusinessStatus.DISCOVERED,
                         created_at=now_iso,
                         updated_at=now_iso,

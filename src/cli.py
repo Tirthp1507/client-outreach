@@ -1143,13 +1143,15 @@ def cmd_business_cycle(args: argparse.Namespace) -> int:
     existing_biz = db.list_businesses(status="all", limit=100)
     real_biz = [b for b in existing_biz if not b.id.startswith("biz_sample_")]
 
-    if not real_biz and (args.demo or not existing_biz):
-        build_sample_business_dataset(db)
-        console.print("[dim]Seeded sample Indian businesses with static research (fixture provider).[/dim]")
-        existing_biz = db.list_businesses(status="all", limit=100)
-        real_biz = [b for b in existing_biz if not b.id.startswith("biz_sample_")]
+    if not real_biz:
+        from b2b.discovery import DiscoveryService
+        console.print("[bold cyan]No stored production leads found. Initiating real SerpAPI Google Maps discovery...[/bold cyan]")
+        service = DiscoveryService(db=db)
+        res = service.ingest_leads(provider_name="serpapi", category="salon", city="Ahmedabad", limit=5)
+        existing_biz = res.businesses
+        real_biz = existing_biz
 
-    target_leads = real_biz if real_biz else existing_biz
+    target_leads = real_biz
 
     svc = BusinessIntelligenceService(db)
     ctx = BusinessCycleContext(cycle_id="cli_cycle")
