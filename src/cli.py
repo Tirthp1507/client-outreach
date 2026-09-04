@@ -1323,7 +1323,7 @@ def build_parser() -> argparse.ArgumentParser:
     sub = parser.add_subparsers(dest="command", required=True)
 
     disc = sub.add_parser("discover", help="Discover and ingest real business leads live or from CSV into database.")
-    disc.add_argument("--provider", choices=["live", "csv", "manual"], default="live", help="Discovery provider (default: live)")
+    disc.add_argument("--provider", choices=["live", "csv", "manual", "serpapi", "google_places"], default="live", help="Discovery provider (default: live)")
     disc.add_argument("--file", default=None, help="Path to CSV lead file (used when provider=csv)")
     disc.add_argument("--location", default=None, help="Location filter (e.g. Navrangpura Ahmedabad, SG Highway Ahmedabad, Andheri Mumbai)")
     disc.add_argument("--city", default=None, help="City to discover (e.g. Ahmedabad, Mumbai, Delhi, Bangalore)")

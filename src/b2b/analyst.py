@@ -83,7 +83,29 @@ CATEGORY_TO_VERTICAL: Dict[str, VerticalType] = {
 def vertical_for(category: str) -> VerticalType:
     """Map a discovery category/industry string onto the VerticalType taxonomy."""
     key = (category or "general_smb").strip().lower()
-    return CATEGORY_TO_VERTICAL.get(key, VerticalType.GENERAL_SMB)
+    if key in CATEGORY_TO_VERTICAL:
+        return CATEGORY_TO_VERTICAL[key]
+    
+    # Substring fallback matching for real-world Google Maps / SerpAPI categories
+    if any(k in key for k in ("salon", "beauty", "spa", "barber", "parlour")):
+        return VerticalType.SALON
+    if any(k in key for k in ("clinic", "medical", "dental", "doctor", "hospital", "health")):
+        return VerticalType.CLINIC
+    if any(k in key for k in ("restaurant", "food", "cafe", "bakery", "dining", "eatery")):
+        return VerticalType.RESTAURANT
+    if any(k in key for k in ("gym", "fitness", "yoga", "workout")):
+        return VerticalType.GYM
+    if any(k in key for k in ("coaching", "education", "training", "classes", "academy", "tutor")):
+        return VerticalType.COACHING
+    if any(k in key for k in ("retail", "store", "shop", "boutique", "supermarket")):
+        return VerticalType.RETAIL
+    if any(k in key for k in ("hotel", "lodging", "resort", "stay")):
+        return VerticalType.HOTEL
+    if any(k in key for k in ("real_estate", "property", "realty")):
+        return VerticalType.REAL_ESTATE
+    if any(k in key for k in ("automotive", "car", "auto", "garage")):
+        return VerticalType.AUTOMOTIVE
+    return VerticalType.GENERAL_SMB
 
 
 @dataclass

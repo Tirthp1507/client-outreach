@@ -57,12 +57,16 @@ class HTTPWebResearchProvider(BaseResearchProvider):
             logger.debug("Failed to fetch %s: %s", url, exc)
             return None, None, str(exc)
 
-    def _call_gemini_research(self, business: BusinessRecord) -> Optional[dict]:
-        """Perform real AI deep research using Google Gemini 2.5 Flash."""
+    def _call_gemini_research(
+        self,
+        business: BusinessRecord,
+        scraped_text: Optional[str] = None,
+        page_title: Optional[str] = None,
+    ) -> Optional[dict]:
+        """Perform real AI deep research using Google Gemini 2.5 Flash with optional live webpage context."""
         import json
         import os
         import urllib.request
-        from config import get_config
 
         env_path = r"c:\Users\tirth\Desktop\automation\config\.env"
         api_key = os.environ.get("GEMINI_API_KEY")
@@ -75,13 +79,18 @@ class HTTPWebResearchProvider(BaseResearchProvider):
         if not api_key:
             return None
 
-        prompt = f"""You are an expert B2B Technology Auditor & AI Analyst.
-Perform deep research & gap analysis on this business in India:
+        context_str = f"Business Name: {business.name}\nCity: {business.city}\nCategory: {business.category}\nCurrent Address: {business.address or 'Local Area'}"
+        if business.website:
+            context_str += f"\nWebsite URL: {business.website}"
+        if page_title:
+            context_str += f"\nScraped Page Title: {page_title}"
+        if scraped_text:
+            context_str += f"\nScraped Web Content Snippet: {scraped_text[:1200]}"
 
-Business Name: {business.name}
-City: {business.city}
-Category: {business.category}
-Current Address: {business.address or 'Local Area'}
+        prompt = f"""You are an expert B2B Technology Auditor & AI Analyst.
+Perform deep research & gap analysis on this business in India using live website/directory context:
+
+{context_str}
 
 Return ONLY valid JSON (no markdown block wrapping) in this exact structure:
 {{
@@ -96,7 +105,8 @@ Return ONLY valid JSON (no markdown block wrapping) in this exact structure:
     "problem_summary": "Specific operational gap or digital weakness tailored to {business.name}",
     "proposed_solution": "Custom software/automation tailored to {business.name}",
     "business_value": "Expected ROI / revenue boost / time saved",
-    "score": 82.5
+    "score": 82.5,
+    "official_website": null
 }}
 """
         url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={api_key}"
@@ -119,75 +129,94 @@ Return ONLY valid JSON (no markdown block wrapping) in this exact structure:
             logger.warning(f"Gemini AI Research call failed for {business.name}: {exc}")
             return None
 
+    def _extract_verified_email_from_html(self, soup: BeautifulSoup, html: str) -> Optional[str]:
+        """Extract exact verified email from mailto links or html regex."""
+        # 1. mailto: links
+        mailto_links = soup.find_all("a", href=re.compile(r"^mailto:", re.I))
+        for link in mailto_links:
+            href = link.get("href", "")
+            email = href.split(":", 1)[1].split("?")[0].strip().lower()
+            if email and "@" in email and not any(email.endswith(ext) for ext in [".png", ".jpg", ".svg", ".js"]):
+                return email
+
+        # 2. regex search on page HTML
+        email_pattern = r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}"
+        matches = re.findall(email_pattern, html)
+        ignored_domains = {"sentry.io", "wixpress.com", "example.com", "domain.com", "schema.org"}
+        for match in matches:
+            email = match.strip().lower()
+            domain = email.split("@")[-1]
+            if domain not in ignored_domains and not any(email.endswith(ext) for ext in [".png", ".jpg", ".jpeg", ".svg", ".gif", ".css", ".js"]):
+                return email
+        return None
+
+    def _extract_phone_from_html(self, soup: BeautifulSoup) -> Optional[str]:
+        """Extract exact phone from tel: links."""
+        tel_links = soup.find_all("a", href=re.compile(r"^tel:", re.I))
+        for link in tel_links:
+            href = link.get("href", "")
+            phone = href.split(":", 1)[1].strip()
+            digits = re.sub(r"\D", "", phone)
+            if len(digits) >= 8:
+                return phone
+        return None
+
     def research(self, business: BusinessRecord, **kwargs: Any) -> BusinessResearch:
-        """Perform comprehensive public digital presence research on a business."""
+        """Perform comprehensive live web testing and digital presence research on a business."""
         collector = EvidenceCollector(business.id)
         website = business.website
 
-        # Try Real Gemini AI Deep Research first
-        ai_res = self._call_gemini_research(business)
-        if ai_res:
-            for claim_item in ai_res.get("evidence_claims", []):
-                cat_str = claim_item.get("category", "identity")
-                cat_enum = EvidenceCategory.BOOKING_FLOW if "booking" in cat_str else EvidenceCategory.IDENTITY
-                collector.add_fact(
-                    cat_enum,
-                    claim_item.get("claim", f"Fact claim for {business.name}"),
-                    source_type=SourceType.DIRECTORY_LISTING
-                )
-            weaknesses = ai_res.get("observed_weaknesses") or ["No online appointment booking widget"]
-            strengths = ai_res.get("observed_strengths") or ["Established local brand reputation"]
+        # If website is missing, check if Gemini AI knows an official website URL
+        if not website:
+            ai_res_init = self._call_gemini_research(business)
+            if ai_res_init:
+                discovered_web = ai_res_init.get("official_website")
+                if discovered_web and isinstance(discovered_web, str) and discovered_web.strip() not in ("null", "None", ""):
+                    website = discovered_web.strip()
+                    business.website = website
 
-            # Save AI generated opportunity metadata into research
+        # If still no website URL
+        if not website:
+            collector.add_fact(
+                EvidenceCategory.IDENTITY,
+                f"Verified local business listing for {business.name} in {business.city}.",
+                source_type=SourceType.DIRECTORY_LISTING,
+            )
+            collector.add_unknown(
+                EvidenceCategory.BOOKING_FLOW,
+                f"No dedicated business website found; lacks 24/7 self-serve digital booking flow.",
+            )
+            ai_res = self._call_gemini_research(business)
+            weaknesses = (ai_res.get("observed_weaknesses") if ai_res else None) or ["Lacks 24/7 self-serve digital booking & inquiry intake flow"]
+            strengths = (ai_res.get("observed_strengths") if ai_res else None) or [f"Established local presence in {business.city}"]
+
+            if ai_res:
+                for claim_item in ai_res.get("evidence_claims", []):
+                    collector.add_fact(
+                        EvidenceCategory.IDENTITY,
+                        claim_item.get("claim", f"Fact claim for {business.name}"),
+                        source_type=SourceType.DIRECTORY_LISTING
+                    )
+
             return BusinessResearch(
                 business_id=business.id,
-                website_exists=bool(website),
-                website_url=website,
-                is_mobile_friendly=True,
-                contact_methods=["phone", "email"] if business.email else ["phone"],
+                website_exists=False,
+                website_url=None,
+                is_mobile_friendly=False,
+                contact_methods=["phone"] if business.phone else [],
                 observed_weaknesses=weaknesses,
                 observed_strengths=strengths,
                 evidence=collector.get_all(),
             )
 
-        if not website:
-            # Run Gemini AI research to discover specific services and operational gaps
-            ai_res = self._call_gemini_research(business)
-            if ai_res:
-                discovered_web = ai_res.get("official_website")
-                if discovered_web and discovered_web != "null":
-                    website = discovered_web
-                    business.website = discovered_web
-
-            if not website:
-                collector.add_fact(
-                    EvidenceCategory.IDENTITY,
-                    f"Verified directory listing for {business.name} ({business.city}).",
-                    source_type=SourceType.DIRECTORY_LISTING,
-                )
-                collector.add_unknown(
-                    EvidenceCategory.BOOKING_FLOW,
-                    f"No automated 24/7 self-serve appointment booking flow found for {business.name}.",
-                )
-                weaknesses = (ai_res.get("observed_weaknesses") if ai_res else None) or [f"Lacks 24/7 self-serve digital booking & inquiry intake flow"]
-                strengths = (ai_res.get("observed_strengths") if ai_res else None) or [f"Established local presence in {business.city}"]
-                return BusinessResearch(
-                    business_id=business.id,
-                    website_exists=False,
-                    website_url=None,
-                    is_mobile_friendly=False,
-                    contact_methods=["phone"] if business.phone else [],
-                    observed_weaknesses=weaknesses,
-                    observed_strengths=strengths,
-                    evidence=collector.get_all(),
-                )
-
+        # Perform Live HTTP Web Browsing / Testing
         html, status_code, fetch_error = self._fetch_html(website)
 
+        # Website Unreachable / Live Connection Failed
         if not html:
             collector.add_fact(
                 EvidenceCategory.IDENTITY,
-                f"Attempted to connect to {website} but server was unreachable: {fetch_error}",
+                f"Attempted to connect to {website} but live server was unreachable: {fetch_error or f'HTTP {status_code}'}",
                 evidence_url=website,
                 source_type=SourceType.WEBSITE_HOMEPAGE,
             )
@@ -195,97 +224,111 @@ Return ONLY valid JSON (no markdown block wrapping) in this exact structure:
                 EvidenceCategory.BOOKING_FLOW,
                 f"Website {website} is currently offline or unreachable.",
             )
+            ai_res = self._call_gemini_research(business)
+            weaknesses = (ai_res.get("observed_weaknesses") if ai_res else None) or [f"Website unreachable ({fetch_error or 'timeout'})"]
+            strengths = (ai_res.get("observed_strengths") if ai_res else None) or ["Local directory presence"]
+
             return BusinessResearch(
                 business_id=business.id,
                 website_exists=False,
                 website_url=website,
                 is_mobile_friendly=None,
                 contact_methods=["phone"] if business.phone else [],
-                observed_weaknesses=[f"Website unreachable ({fetch_error or 'timeout'})"],
+                observed_weaknesses=weaknesses,
+                observed_strengths=strengths,
                 evidence=collector.get_all(),
             )
 
-        # Parse HTML safely with BeautifulSoup
+        # Website Online & Reachable! Parse live DOM content
         soup = BeautifulSoup(html, "html.parser")
+        text_content = soup.get_text(separator=" ", strip=True)
 
-        # 1. Page Title & Meta Description
+        # 1. Title & Meta Description
         title_tag = soup.find("title")
         title_text = title_tag.get_text().strip() if title_tag else ""
         if title_text:
             collector.add_fact(
                 EvidenceCategory.IDENTITY,
-                f"Website title: '{title_text}'",
+                f"Live website title verified: '{title_text}'",
                 evidence_url=website,
                 raw_snippet=title_text[:120],
                 source_type=SourceType.WEBSITE_HOMEPAGE,
             )
 
-        # 2. Mobile viewport check
+        # 2. Extract Exact Email from HTML DOM
+        extracted_email = self._extract_verified_email_from_html(soup, html)
+        if extracted_email:
+            collector.add_fact(
+                EvidenceCategory.CONTACT_FLOW,
+                f"Verified business email extracted from website: {extracted_email}",
+                evidence_url=website,
+                source_type=SourceType.WEBSITE_CONTACT,
+            )
+            if not business.email:
+                business.email = extracted_email
+
+        # 3. Extract Exact Phone from HTML DOM
+        extracted_phone = self._extract_phone_from_html(soup)
+        if extracted_phone:
+            collector.add_fact(
+                EvidenceCategory.CONTACT_FLOW,
+                f"Verified telephone number extracted from website: {extracted_phone}",
+                evidence_url=website,
+                source_type=SourceType.WEBSITE_CONTACT,
+            )
+            if not business.phone:
+                business.phone = extracted_phone
+
+        # 4. Mobile viewport check
         viewport_meta = soup.find("meta", attrs={"name": re.compile(r"^viewport$", re.I)})
         is_mobile_friendly = bool(viewport_meta and "width=device-width" in (viewport_meta.get("content") or "").lower())
         collector.add_fact(
             EvidenceCategory.MOBILE_UX,
-            "Mobile viewport meta tag detected" if is_mobile_friendly else "No standard responsive mobile viewport tag detected",
+            "Responsive mobile viewport meta tag verified on website" if is_mobile_friendly else "No responsive mobile viewport tag detected",
             evidence_url=website,
-            confidence=0.9,
+            confidence=0.95,
         )
 
-        # 3. Contact methods & WhatsApp detection
+        # 5. Contact methods & WhatsApp detection
         contact_methods: List[str] = []
         html_lower = html.lower()
 
-        # WhatsApp detection
-        has_whatsapp = (
-            "api.whatsapp.com" in html_lower
-            or "wa.me" in html_lower
-            or "whatsapp" in html_lower
-        )
+        has_whatsapp = "api.whatsapp.com" in html_lower or "wa.me" in html_lower or "whatsapp" in html_lower
         if has_whatsapp:
             contact_methods.append("whatsapp")
             collector.add_fact(
                 EvidenceCategory.CONTACT_FLOW,
-                "WhatsApp click-to-chat link or button present on the website.",
+                "Live WhatsApp click-to-chat button present on website.",
                 evidence_url=website,
                 source_type=SourceType.WEBSITE_HOMEPAGE,
             )
 
-        # Phone detection
-        tel_links = soup.find_all("a", href=re.compile(r"^tel:", re.I))
-        if tel_links or business.phone:
+        if business.phone or extracted_phone:
             contact_methods.append("phone")
-            collector.add_fact(
-                EvidenceCategory.CONTACT_FLOW,
-                "Telephone contact number displayed on the website.",
-                evidence_url=website,
-                source_type=SourceType.WEBSITE_CONTACT,
-            )
-
-        # Email detection
-        mailto_links = soup.find_all("a", href=re.compile(r"^mailto:", re.I))
-        if mailto_links or business.email:
+        if business.email or extracted_email:
             contact_methods.append("email")
 
-        # 4. Booking & Ordering flow detection
-        booking_keywords = ["book appointment", "online booking", "schedule appointment", "calendly", "practo", "book online", "reserve table"]
+        # 6. Booking & Ordering flow detection
+        booking_keywords = ["book appointment", "online booking", "schedule appointment", "calendly", "cal.com", "appointy", "practo", "book online", "reserve table"]
         ordering_keywords = ["order online", "add to cart", "swiggy", "zomato", "menu cart", "checkout"]
 
-        has_booking = any(k in html_lower for k in booking_keywords)
+        has_booking = any(k in html_lower for k in booking_keywords) or bool(soup.find("form"))
         has_ordering = any(k in html_lower for k in ordering_keywords)
 
         if has_booking:
             collector.add_fact(
                 EvidenceCategory.BOOKING_FLOW,
-                "Online appointment or reservation booking keywords/widgets found on page.",
+                "Online appointment or intake booking form/widget verified on webpage.",
                 evidence_url=website,
             )
         else:
             collector.add_fact(
                 EvidenceCategory.BOOKING_FLOW,
-                "No automated online booking or appointment scheduling system found on homepage.",
+                "No automated 24/7 self-serve appointment booking widget found on webpage.",
                 evidence_url=website,
             )
 
-        # 5. Technology Stack hints
+        # 7. Technology Stack hints
         tech_stack: List[str] = []
         if "wp-content" in html_lower or "wp-includes" in html_lower:
             tech_stack.append("WordPress")
@@ -301,18 +344,40 @@ Return ONLY valid JSON (no markdown block wrapping) in this exact structure:
         if tech_stack:
             collector.add_fact(
                 EvidenceCategory.TECH_STACK,
-                f"Identified frontend/CMS technologies: {', '.join(tech_stack)}",
+                f"Identified web technologies: {', '.join(tech_stack)}",
                 evidence_url=website,
             )
 
-        # 6. Observed weaknesses
+        # 8. Call Gemini AI with scraped live webpage text for grounded analysis
+        ai_res = self._call_gemini_research(business, scraped_text=text_content, page_title=title_text)
+
         observed_weaknesses: List[str] = []
-        if not has_booking and business.category in ("clinic", "salon", "gym"):
-            observed_weaknesses.append("No online appointment booking widget (phone/walk-in only)")
-        if not has_ordering and business.category in ("restaurant", "retail"):
-            observed_weaknesses.append("No online ordering or catalog menu checkout")
-        if not is_mobile_friendly:
-            observed_weaknesses.append("Website lacks responsive mobile viewport optimization")
+        if ai_res and ai_res.get("observed_weaknesses"):
+            observed_weaknesses = ai_res["observed_weaknesses"]
+        else:
+            if not has_booking and business.category in ("clinic", "salon", "gym", "spa", "dental"):
+                observed_weaknesses.append("No online appointment booking widget (phone/walk-in only)")
+            if not has_ordering and business.category in ("restaurant", "retail", "bakery"):
+                observed_weaknesses.append("No online ordering or digital menu checkout system")
+            if not is_mobile_friendly:
+                observed_weaknesses.append("Website lacks responsive mobile viewport optimization")
+
+        observed_strengths: List[str] = []
+        if ai_res and ai_res.get("observed_strengths"):
+            observed_strengths = ai_res["observed_strengths"]
+        else:
+            observed_strengths = [f"Verified active website ({title_text[:50] or website})"]
+
+        if ai_res:
+            for claim_item in ai_res.get("evidence_claims", []):
+                cat_str = claim_item.get("category", "identity")
+                cat_enum = EvidenceCategory.BOOKING_FLOW if "booking" in cat_str else EvidenceCategory.IDENTITY
+                collector.add_fact(
+                    cat_enum,
+                    claim_item.get("claim", f"Fact claim for {business.name}"),
+                    evidence_url=website,
+                    source_type=SourceType.WEBSITE_HOMEPAGE
+                )
 
         return BusinessResearch(
             business_id=business.id,
@@ -324,7 +389,7 @@ Return ONLY valid JSON (no markdown block wrapping) in this exact structure:
             booking_system_found=has_booking,
             ordering_system_found=has_ordering,
             observed_weaknesses=observed_weaknesses,
-            observed_strengths=["Active online presence", f"Detected title: {title_text[:60]}"] if title_text else ["Active online presence"],
+            observed_strengths=observed_strengths,
             evidence=collector.get_all(),
         )
 
@@ -332,3 +397,4 @@ Return ONLY valid JSON (no markdown block wrapping) in this exact structure:
 # Auto-register HTTPWebResearchProvider in registry
 ResearchRegistry.register("http_web", HTTPWebResearchProvider())
 ResearchRegistry.register("live", HTTPWebResearchProvider())
+

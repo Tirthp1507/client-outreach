@@ -307,6 +307,7 @@ class BusinessIntelligenceService(BusinessPipelineIntent):
         results = []
         for biz in businesses:
             research = provider.research(biz)
+            self.db.save_business(biz)
             self.db.save_business_research(research)
             self.db.update_business_status(biz.id, BusinessStatus.RESEARCHED)
             results.append(research)
