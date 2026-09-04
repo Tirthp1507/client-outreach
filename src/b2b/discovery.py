@@ -697,6 +697,8 @@ class SerpAPIDiscoveryProvider(BaseDiscoveryProvider):
         target_city = (city or location or "Ahmedabad").strip()
         target_cat = (category or "all").strip()
 
+        no_website_only = bool(kwargs.get("no_website_only") or kwargs.get("without_website"))
+
         query_text = f"{target_cat} in {target_city}" if target_cat != "all" else f"top businesses in {target_city}"
         url = f"https://serpapi.com/search.json?engine=google_maps&q={quote_plus(query_text)}&type=search&api_key={serp_key}"
 
@@ -709,12 +711,20 @@ class SerpAPIDiscoveryProvider(BaseDiscoveryProvider):
                 data = json.loads(resp.read().decode("utf-8"))
                 results = data.get("local_results", [])
 
-                for item in results[:limit]:
+                for item in results:
+                    if len(records) >= limit:
+                        break
+
                     raw_name = item.get("title", "Local Business")
                     website = item.get("website")
                     phone = item.get("phone")
                     addr = item.get("address", target_city)
                     ptype = item.get("type", target_cat)
+
+                    # If no_website_only flag is set, skip businesses that already have custom official websites
+                    is_social_or_none = not website or any(x in (website or "").lower() for x in ["facebook.com", "instagram.com", "wa.me", "whatsapp.com"])
+                    if no_website_only and not is_social_or_none:
+                        continue
 
                     # Query Hunter.io for real verified email if domain exists
                     email = None

@@ -986,11 +986,13 @@ def cmd_discover(args: argparse.Namespace) -> int:
     out_base = Path(args.output_dir or config.get("pipeline", {}).get("output_dir", "output"))
     db = Database(out_base / "automation.db")
     service = DiscoveryService(db=db)
-
     provider_name = "csv" if args.file else args.provider
+    no_website = getattr(args, "no_website", False)
+    if no_website:
+        console.print("[bold yellow]Filtering for businesses that DO NOT have an official website...[/bold yellow]")
     console.print(f"[bold cyan]Initiating B2B Lead Discovery (Provider: {provider_name})...[/bold cyan]")
     try:
-        kwargs: dict[str, Any] = {}
+        kwargs: dict[str, Any] = {"no_website_only": no_website}
         if provider_name in ("csv", "csv_import"):
             file_path = args.file or str(PROJECT_ROOT / "data" / "indian_businesses_sample.csv")
             kwargs["file_path"] = file_path
@@ -1038,7 +1040,7 @@ def cmd_discover(args: argparse.Namespace) -> int:
             f"Total discovered: {result.total_discovered} | Newly saved to database: {result.total_saved} | Duplicates: {result.total_duplicates}\n\n"
             f"View all leads: [bold cyan]python src/cli.py leads[/bold cyan]",
             title="Lead Discovery Complete",
-            border_style="green",
+            border_style="cyan",
         )
     )
     return 0
@@ -1054,6 +1056,7 @@ def cmd_leads(args: argparse.Namespace) -> int:
         category=args.category,
         city=args.city,
         location=args.location,
+        no_website_only=getattr(args, "no_website", False),
         limit=args.limit,
     )
 
@@ -1140,14 +1143,15 @@ def cmd_business_cycle(args: argparse.Namespace) -> int:
     out_base = Path(args.output_dir or config.get("pipeline", {}).get("output_dir", "output"))
     db = Database(out_base / "automation.db")
 
-    existing_biz = db.list_businesses(status="all", limit=100)
+    no_website = getattr(args, "no_website", False)
+    existing_biz = db.list_businesses(status="all", no_website_only=no_website, limit=100)
     real_biz = [b for b in existing_biz if not b.id.startswith("biz_sample_")]
 
     if not real_biz:
         from b2b.discovery import DiscoveryService
-        console.print("[bold cyan]No stored production leads found. Initiating real SerpAPI Google Maps discovery...[/bold cyan]")
+        console.print("[bold cyan]No matching stored production leads found. Initiating real SerpAPI Google Maps discovery...[/bold cyan]")
         service = DiscoveryService(db=db)
-        res = service.ingest_leads(provider_name="serpapi", category="salon", city="Ahmedabad", limit=5)
+        res = service.ingest_leads(provider_name="serpapi", category="salon", city="Ahmedabad", limit=5, no_website_only=no_website)
         existing_biz = res.businesses
         real_biz = existing_biz
 
@@ -1330,6 +1334,7 @@ def build_parser() -> argparse.ArgumentParser:
     disc.add_argument("--location", default=None, help="Location filter (e.g. Navrangpura Ahmedabad, SG Highway Ahmedabad, Andheri Mumbai)")
     disc.add_argument("--city", default=None, help="City to discover (e.g. Ahmedabad, Mumbai, Delhi, Bangalore)")
     disc.add_argument("--category", default=None, help="Category to discover (e.g. clinic, restaurant, salon, coaching, gym)")
+    disc.add_argument("--no-website", action="store_true", help="Filter for businesses that DO NOT have an official website")
     disc.add_argument("--limit", type=int, default=50, help="Maximum leads to ingest (default: 50)")
     disc.add_argument("--output-dir", default=None, help="output directory (default: output/)")
     disc.set_defaults(func=cmd_discover)
@@ -1340,6 +1345,7 @@ def build_parser() -> argparse.ArgumentParser:
     leads_p.add_argument("--city", default=None, help="Filter by city")
     leads_p.add_argument("--category", default=None, help="Filter by category")
     leads_p.add_argument("--status", default=None, help="Filter by lifecycle status")
+    leads_p.add_argument("--no-website", action="store_true", help="Display only leads lacking an official website")
     leads_p.add_argument("--limit", type=int, default=50, help="Maximum leads to display (default: 50)")
     leads_p.add_argument("--output-dir", default=None, help="output directory (default: output/)")
     leads_p.set_defaults(func=cmd_leads)
@@ -1360,6 +1366,7 @@ def build_parser() -> argparse.ArgumentParser:
     # business-cycle (B2B Intelligence)
     bc = sub.add_parser("business-cycle", help="Run analysis -> demos -> outreach draft cycle on the stored leads.")
     bc.add_argument("--demo", action="store_true", help="Seed offline sample businesses + static research first (fixture provider)")
+    bc.add_argument("--no-website", action="store_true", help="Target only leads lacking an official website")
     bc.add_argument("--use-registered-provider", action="store_true", help="Run live research via any registered provider instead of stored research")
     bc.add_argument("--json", action="store_true", help="Emit machine-readable JSON report")
     bc.add_argument("--output-dir", default=None, help="output directory (default: output/)")

@@ -879,9 +879,10 @@ class Database:
         category: Optional[str] = None,
         city: Optional[str] = None,
         location: Optional[str] = None,
+        no_website_only: bool = False,
         limit: int = 100,
     ) -> List[BusinessRecord]:
-        """List businesses matching optional status, category, city, or location filters."""
+        """List businesses matching optional status, category, city, location, or no_website_only filters."""
         query = "SELECT * FROM businesses WHERE 1=1"
         params: List[Any] = []
         if status and status != "all":
@@ -897,6 +898,8 @@ class Database:
         elif city and city != "all":
             query += " AND LOWER(city) = ?"
             params.append(city.strip().lower())
+        if no_website_only:
+            query += " AND (website IS NULL OR website = '' OR LOWER(website) LIKE '%facebook.com%' OR LOWER(website) LIKE '%instagram.com%' OR LOWER(website) LIKE '%wa.me%')"
         query += " ORDER BY created_at DESC LIMIT ?"
         params.append(limit)
 
