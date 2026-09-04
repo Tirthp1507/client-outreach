@@ -207,12 +207,25 @@ class Database:
                     source_provider TEXT NOT NULL,
                     source_id TEXT,
                     status TEXT NOT NULL DEFAULT 'discovered',
+                    is_validated INTEGER DEFAULT 0,
+                    validation_score REAL DEFAULT 0.0,
+                    validation_details_json TEXT DEFAULT '{}',
                     created_at TEXT NOT NULL,
                     updated_at TEXT NOT NULL,
                     UNIQUE(name, city)
                 )
                 """
             )
+            biz_cols = {row["name"] for row in conn.execute("PRAGMA table_info(businesses)").fetchall()}
+            biz_migrations = [
+                ("is_validated", "INTEGER DEFAULT 0"),
+                ("validation_score", "REAL DEFAULT 0.0"),
+                ("validation_details_json", "TEXT DEFAULT '{}'"),
+            ]
+            for col_name, col_type in biz_migrations:
+                if col_name not in biz_cols:
+                    conn.execute(f"ALTER TABLE businesses ADD COLUMN {col_name} {col_type}")
+
             conn.execute("CREATE INDEX IF NOT EXISTS idx_businesses_domain ON businesses(domain)")
             conn.execute("CREATE INDEX IF NOT EXISTS idx_businesses_category ON businesses(category)")
             conn.execute("CREATE INDEX IF NOT EXISTS idx_businesses_city ON businesses(city)")
@@ -814,14 +827,16 @@ class Database:
         """Insert or update a business record."""
         now = datetime.now(timezone.utc).isoformat()
         business.updated_at = now
+        val_json = json.dumps(business.validation_details or {})
         with self._get_connection() as conn:
             conn.execute(
                 """
                 INSERT INTO businesses (
                     id, name, category, city, state, country, address, website,
                     domain, phone, email, source_provider, source_id, status,
+                    is_validated, validation_score, validation_details_json,
                     created_at, updated_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(id) DO UPDATE SET
                     name=excluded.name,
                     category=excluded.category,
@@ -834,6 +849,9 @@ class Database:
                     phone=excluded.phone,
                     email=excluded.email,
                     status=excluded.status,
+                    is_validated=excluded.is_validated,
+                    validation_score=excluded.validation_score,
+                    validation_details_json=excluded.validation_details_json,
                     updated_at=excluded.updated_at
                 """,
                 (
@@ -851,6 +869,9 @@ class Database:
                     business.source_provider,
                     business.source_id,
                     business.status.value if isinstance(business.status, BusinessStatus) else business.status,
+                    1 if business.is_validated else 0,
+                    float(business.validation_score),
+                    val_json,
                     business.created_at,
                     business.updated_at,
                 ),
@@ -1376,6 +1397,12 @@ class Database:
     @staticmethod
     def _row_to_business(row: sqlite3.Row) -> BusinessRecord:
         d = dict(row)
+        val_json = d.get("validation_details_json") or "{}"
+        try:
+            val_details = json.loads(val_json) if isinstance(val_json, str) else dict(val_json)
+        except Exception:
+            val_details = {}
+
         return BusinessRecord(
             id=d["id"],
             name=d["name"],
@@ -1391,6 +1418,9 @@ class Database:
             source_provider=d.get("source_provider") or "manual_input",
             source_id=d.get("source_id"),
             status=BusinessStatus(d.get("status") or "discovered"),
+            is_validated=bool(d.get("is_validated")),
+            validation_score=float(d.get("validation_score") or 0.0),
+            validation_details=val_details,
             created_at=d["created_at"],
             updated_at=d["updated_at"],
         )

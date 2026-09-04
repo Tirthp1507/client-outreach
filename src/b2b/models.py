@@ -209,6 +209,9 @@ class BusinessRecord(BaseModel):
     source_provider: str = "manual_input"
     source_id: Optional[str] = None
     status: BusinessStatus = BusinessStatus.DISCOVERED
+    is_validated: bool = False
+    validation_score: float = 0.0
+    validation_details: Dict[str, Any] = Field(default_factory=dict)
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     updated_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 

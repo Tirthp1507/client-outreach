@@ -1091,6 +1091,59 @@ def cmd_leads(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_validate_leads(args: argparse.Namespace) -> int:
+    """Run 5-tier API key data accuracy audit on all stored business leads."""
+    config = get_config()
+    out_base = Path(args.output_dir or config.get("pipeline", {}).get("output_dir", "output"))
+    db = Database(out_base / "automation.db")
+
+    from b2b.validator import DataValidationEngine
+    validator = DataValidationEngine()
+
+    leads = db.list_businesses(limit=args.limit)
+    if not leads:
+        console.print("[yellow]No business leads found in database to validate.[/yellow]")
+        return 0
+
+    console.print(f"[bold cyan]Auditing & Validating {len(leads)} Business Leads via 5-Tier API Validation Engine...[/bold cyan]\n")
+
+    table = Table(title=f"API Data Validation Report — {len(leads)} Leads Audited")
+    table.add_column("Business Name", style="bold white")
+    table.add_column("City", style="green")
+    table.add_column("Phone", style="white")
+    table.add_column("Website", style="magenta")
+    table.add_column("Score", style="yellow")
+    table.add_column("Accuracy Status", style="bold")
+
+    validated_count = 0
+    for b in leads:
+        res = validator.validate(b, no_website_only=not bool(b.website))
+        db.save_business(b)
+        status_text = "[bold green]100% VERIFIED[/bold green]" if res.is_valid else "[bold red]FAILED AUDIT[/bold red]"
+        if res.is_valid:
+            validated_count += 1
+
+        table.add_row(
+            b.name[:28],
+            b.city,
+            b.phone or "-",
+            b.website or "None (No-website)",
+            f"{res.validation_score:.1f}%",
+            status_text,
+        )
+
+    console.print(table)
+    console.print(
+        Panel(
+            f"Total Audited: {len(leads)} | [bold green]100% Verified Validated Leads: {validated_count}[/bold green] | [bold red]Failed Validation: {len(leads) - validated_count}[/bold red]\n\n"
+            f"All validated business records updated in SQLite database: {db.db_path}",
+            title="API Data Validation Gate Complete",
+            border_style="green" if validated_count == len(leads) else "yellow",
+        )
+    )
+    return 0
+
+
 def cmd_add_lead(args: argparse.Namespace) -> int:
     config = get_config()
     out_base = Path(args.output_dir or config.get("pipeline", {}).get("output_dir", "output"))
@@ -1349,6 +1402,12 @@ def build_parser() -> argparse.ArgumentParser:
     leads_p.add_argument("--limit", type=int, default=50, help="Maximum leads to display (default: 50)")
     leads_p.add_argument("--output-dir", default=None, help="output directory (default: output/)")
     leads_p.set_defaults(func=cmd_leads)
+
+    # validate-leads (Phase B API Accuracy Gate)
+    val_p = sub.add_parser("validate-leads", help="Run 5-tier API key data accuracy audit on all stored business leads.")
+    val_p.add_argument("--limit", type=int, default=50, help="Maximum leads to validate (default: 50)")
+    val_p.add_argument("--output-dir", default=None, help="output directory (default: output/)")
+    val_p.set_defaults(func=cmd_validate_leads)
 
     # add-lead (Phase B)
     add_p = sub.add_parser("add-lead", help="Manually add a single business lead.")

@@ -855,7 +855,12 @@ class DiscoveryService:
         saved_leads: List[BusinessRecord] = []
         duplicate_entries: List[Dict[str, str]] = []
 
+        from b2b.validator import DataValidationEngine
+        validator = DataValidationEngine()
+        no_website_only = bool(provider_kwargs.get("no_website_only") or provider_kwargs.get("without_website"))
+
         for lead in discovered_leads:
+            validator.validate(lead, no_website_only=no_website_only)
             is_dup, reason = self.deduplicator.is_duplicate(lead)
             if is_dup:
                 duplicate_entries.append({
